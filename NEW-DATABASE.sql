@@ -1,4 +1,5 @@
--- Author: David Austin
+CREATE DATABASE university_project;
+USE university_project;
 
 CREATE TABLE department (
     dept_id       CHAR(5)      PRIMARY KEY,
