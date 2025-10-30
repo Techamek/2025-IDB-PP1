@@ -45,16 +45,24 @@ CREATE TABLE course (
 );
 
 CREATE TABLE classroom (
-    room_id       SERIAL PRIMARY KEY,
+    room_id       INT AUTO_INCREMENT PRIMARY KEY,
     building      VARCHAR(20),
     room_number   VARCHAR(10),
     capacity      INT CHECK (capacity > 0),
     UNIQUE (building, room_number)
 );
 
+CREATE TABLE time_slot (
+    time_slot_id VARCHAR(5) PRIMARY KEY,
+    day          VARCHAR(3) CHECK (day IN ('Mon','Tue','Wed','Thu','Fri','Sat')),
+    start_hr     INT CHECK (start_hr >= 0 AND start_hr < 24),
+    start_min    INT CHECK (start_min >= 0 AND start_min < 60),
+    end_hr       INT CHECK (end_hr >= 0 AND end_hr < 24),
+    end_min      INT CHECK (end_min >= 0 AND end_min < 60)
+);
 
 CREATE TABLE section (
-    section_id   SERIAL PRIMARY KEY,
+    section_id   INT AUTO_INCREMENT PRIMARY KEY,
     course_id    CHAR(7),
     sec_code     VARCHAR(5),
     semester     VARCHAR(10) CHECK (semester IN ('Spring','Summer','Fall','Winter')),
@@ -71,7 +79,7 @@ CREATE TABLE section (
 );
 
 CREATE TABLE enrollment (
-    enrollment_id SERIAL PRIMARY KEY,
+    enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id    CHAR(5),
     section_id    INT,
     grade         CHAR(2) CHECK (grade IN ('A','B','C','D','F','I','W') OR grade IS NULL),
@@ -80,16 +88,6 @@ CREATE TABLE enrollment (
     FOREIGN KEY (section_id) REFERENCES section(section_id)
         ON DELETE CASCADE,
     UNIQUE(student_id, section_id)
-);
-
-CREATE TABLE time_slot (
-    time_slot_id VARCHAR(5),
-    day          VARCHAR(3) CHECK (day IN ('Mon','Tue','Wed','Thu','Fri','Sat')),
-    start_hr     INT CHECK (start_hr >= 0 AND start_hr < 24),
-    start_min    INT CHECK (start_min >= 0 AND start_min < 60),
-    end_hr       INT CHECK (end_hr >= 0 AND end_hr < 24),
-    end_min      INT CHECK (end_min >= 0 AND end_min < 60),
-    PRIMARY KEY (time_slot_id, day, start_hr, start_min)
 );
 
 CREATE TABLE teaches (
