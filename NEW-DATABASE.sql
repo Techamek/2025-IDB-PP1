@@ -18,7 +18,9 @@ CREATE TABLE major (
 
 CREATE TABLE student (
     student_id     CHAR(5) PRIMARY KEY,
-    name           VARCHAR(30) NOT NULL,
+    first_name     VARCHAR(30) NOT NULL,
+    middle_name    VARCHAR(30) NOT NULL,
+    last_name      VARCHAR(30) NOT NULL,
     major_id       CHAR(5),
     enrollment_year INT CHECK (enrollment_year BETWEEN 2000 AND 2099),
     total_credits   INT DEFAULT 0 CHECK (total_credits >= 0),
@@ -28,7 +30,9 @@ CREATE TABLE student (
 
 CREATE TABLE instructor (
     instructor_id  CHAR(5) PRIMARY KEY,
-    name           VARCHAR(30) NOT NULL,
+    first_name     VARCHAR(30) NOT NULL,
+    middle_name    VARCHAR(30) NOT NULL,
+    last_name      VARCHAR(30) NOT NULL,
     dept_id        CHAR(5),
     salary         DECIMAL(10,2) CHECK (salary >= 30000),
     FOREIGN KEY (dept_id) REFERENCES department(dept_id)
