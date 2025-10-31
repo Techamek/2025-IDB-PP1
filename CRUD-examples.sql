@@ -1,26 +1,50 @@
--- Instructor CRUD
-INSERT INTO instructor (...);
+-- instructor CRUD
+-- Create
+INSERT INTO instructor (instructor_id, first_name, middle_name, last_name, salary)
+VALUES (..., ..., ..., ..., ...);
+
+-- Read
 SELECT ... FROM instructor;
-UPDATE instructor ...;
-DELETE FROM instructor ...;
 
--- Student CRUD
-INSERT INTO student (...);
+-- Update
+UPDATE instructor
+SET salary = ...
+WHERE instructor_id = ...;
+
+-- Delete
+DELETE FROM instructor
+WHERE instructor_id = ...;
+
+-- student CRUD
+-- Create
+INSERT INTO student (student_id, first_name, middle_name, last_name, enrollment_year, total_credits)
+VALUES (..., ..., ..., ..., ..., ...);
+
+-- Read
 SELECT ... FROM student;
-UPDATE student ...;
-DELETE FROM student ...;
 
--- Section CRUD
-INSERT INTO section (...);
-SELECT ...;
-UPDATE ...;
-DELETE ...;
+-- Update
+UPDATE student
+SET total_credits = ...
+WHERE student_id = ...;
 
--- Enroll a student
-INSERT INTO enrollment (...);
--- Assign instructor
-INSERT INTO teaches (...);
--- Drop class
-DELETE FROM enrollment ...;
--- Give grade
-UPDATE enrollment ...;
+-- Delete
+DELETE FROM student
+WHERE student_id = ...;
+
+-- section CRUD
+-- Create
+INSERT INTO section (sec_code, semester, year)
+VALUES (..., ..., ...);
+
+-- Read
+SELECT ... FROM section;
+
+-- Update
+UPDATE section
+SET semester = ..., year = ...
+WHERE sec_code = ...;
+
+-- Delete
+DELETE FROM section
+WHERE sec_code = ...;
