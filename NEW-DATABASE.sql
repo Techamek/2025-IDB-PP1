@@ -10,10 +10,7 @@ CREATE TABLE department (
 
 CREATE TABLE major (
     major_id      CHAR(5) PRIMARY KEY,
-    major_name    VARCHAR(50) NOT NULL,
-    dept_id       CHAR(5),
-    FOREIGN KEY (dept_id) REFERENCES department(dept_id)
-        ON DELETE SET NULL
+    major_name    VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE student (
@@ -21,11 +18,8 @@ CREATE TABLE student (
     first_name     VARCHAR(30) NOT NULL,
     middle_name    VARCHAR(30) NOT NULL,
     last_name      VARCHAR(30) NOT NULL,
-    major_id       CHAR(5),
     enrollment_year INT CHECK (enrollment_year BETWEEN 2000 AND 2099),
-    total_credits   INT DEFAULT 0 CHECK (total_credits >= 0),
-    FOREIGN KEY (major_id) REFERENCES major(major_id)
-        ON DELETE SET NULL
+    total_credits   INT DEFAULT 0 CHECK (total_credits >= 0)
 );
 
 CREATE TABLE instructor (
@@ -33,19 +27,13 @@ CREATE TABLE instructor (
     first_name     VARCHAR(30) NOT NULL,
     middle_name    VARCHAR(30) NOT NULL,
     last_name      VARCHAR(30) NOT NULL,
-    dept_id        CHAR(5),
-    salary         DECIMAL(10,2) CHECK (salary >= 30000),
-    FOREIGN KEY (dept_id) REFERENCES department(dept_id)
-        ON DELETE SET NULL
+    salary         DECIMAL(10,2) CHECK (salary >= 30000)
 );
 
 CREATE TABLE course (
     course_id     CHAR(7) PRIMARY KEY,
     title         VARCHAR(50) NOT NULL,
-    dept_id       CHAR(5),
-    credits       INT CHECK (credits BETWEEN 1 AND 5),
-    FOREIGN KEY (dept_id) REFERENCES department(dept_id)
-        ON DELETE SET NULL
+    credits       INT CHECK (credits BETWEEN 1 AND 5)
 );
 
 CREATE TABLE classroom (
@@ -67,31 +55,15 @@ CREATE TABLE time_slot (
 
 CREATE TABLE section (
     section_id   INT AUTO_INCREMENT PRIMARY KEY,
-    course_id    CHAR(7),
     sec_code     VARCHAR(5),
     semester     VARCHAR(10) CHECK (semester IN ('Spring','Summer','Fall','Winter')),
     year         INT CHECK (year BETWEEN 2000 AND 2099),
-    room_id      INT,
-    time_slot_id VARCHAR(5),
-    FOREIGN KEY (course_id) REFERENCES course(course_id)
-        ON DELETE CASCADE,
-    FOREIGN KEY (room_id) REFERENCES classroom(room_id)
-        ON DELETE SET NULL,
-    FOREIGN KEY (time_slot_id) REFERENCES time_slot(time_slot_id)
-        ON DELETE SET NULL,
-    UNIQUE (course_id, semester, year, sec_code)
+    UNIQUE (semester, year, sec_code)
 );
 
 CREATE TABLE enrollment (
     enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
-    student_id    CHAR(5),
-    section_id    INT,
-    grade         CHAR(2) CHECK (grade IN ('A','B','C','D','F','I','W') OR grade IS NULL),
-    FOREIGN KEY (student_id) REFERENCES student(student_id)
-        ON DELETE CASCADE,
-    FOREIGN KEY (section_id) REFERENCES section(section_id)
-        ON DELETE CASCADE,
-    UNIQUE(student_id, section_id)
+    grade         CHAR(2) CHECK (grade IN ('A','B','C','D','F','I','W') OR grade IS NULL)
 );
 
 CREATE TABLE teaches (
@@ -135,23 +107,23 @@ CREATE TABLE declared (
     student_id CHAR(5),
     major_id CHAR(5),
     PRIMARY KEY (student_id, major_id),
-    FOREIGN KEY (student_id) REFERENCES major(student_id),
-    FOREIGN KEY (major_id) REFERENCES department(major_id)
+    FOREIGN KEY (student_id) REFERENCES student(student_id),
+    FOREIGN KEY (major_id) REFERENCES major(major_id)
 );
 
 CREATE TABLE enrolled (
     student_id CHAR(5),
     enrollment_id INT,
     PRIMARY KEY (student_id, enrollment_id),
-    FOREIGN KEY (student_id) REFERENCES major(student_id),
-    FOREIGN KEY (enrollment_id) REFERENCES department(enrollment_id)
+    FOREIGN KEY (student_id) REFERENCES student(student_id),
+    FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id)
 );
 
 CREATE TABLE employed (
     instructor_id CHAR(5),
     dept_id CHAR(5),
     PRIMARY KEY (instructor_id, dept_id),
-    FOREIGN KEY (instructor_id) REFERENCES major(instructor_id),
+    FOREIGN KEY (instructor_id) REFERENCES instructor(instructor_id),
     FOREIGN KEY (dept_id) REFERENCES department(dept_id)
 );
 
@@ -159,38 +131,38 @@ CREATE TABLE held_in (
     section_id INT,
     room_id INT,
     PRIMARY KEY (section_id, room_id),
-    FOREIGN KEY (section_id) REFERENCES major(section_id),
-    FOREIGN KEY (room_id) REFERENCES department(room_id)
+    FOREIGN KEY (section_id) REFERENCES section(section_id),
+    FOREIGN KEY (room_id) REFERENCES classroom(room_id)
 );
 
 CREATE TABLE is_offered (
     section_id INT,
-    room_id INT,
-    PRIMARY KEY (section_id, room_id),
-    FOREIGN KEY (section_id) REFERENCES major(section_id),
-    FOREIGN KEY (room_id) REFERENCES department(room_id)
+    enrollment_id INT,
+    PRIMARY KEY (section_id, enrollment_id),
+    FOREIGN KEY (section_id) REFERENCES section(section_id),
+    FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id)
 );
 
 CREATE TABLE held_during (
     section_id INT,
     time_slot_id varchar(5),
     PRIMARY KEY (section_id, time_slot_id),
-    FOREIGN KEY (section_id) REFERENCES major(section_id),
-    FOREIGN KEY (time_slot_id) REFERENCES department(time_slot_id)
+    FOREIGN KEY (section_id) REFERENCES section(section_id),
+    FOREIGN KEY (time_slot_id) REFERENCES time_slot(time_slot_id)
 );
 
 CREATE TABLE has_sections (
     section_id INT,
     course_id char(7),
     PRIMARY KEY (section_id, course_id),
-    FOREIGN KEY (section_id) REFERENCES major(section_id),
-    FOREIGN KEY (course_id) REFERENCES department(course_id)
+    FOREIGN KEY (section_id) REFERENCES section(section_id),
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
 );
 
 CREATE TABLE has_course (
     dept_id       CHAR(5),
     course_id     char(7),
     PRIMARY KEY (dept_id, course_id),
-    FOREIGN KEY (dept_id) REFERENCES major(dept_id),
-    FOREIGN KEY (course_id) REFERENCES department(course_id)
+    FOREIGN KEY (dept_id) REFERENCES department(dept_id),
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
 );
