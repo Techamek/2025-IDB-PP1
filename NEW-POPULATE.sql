@@ -1,3 +1,5 @@
+USE university_project;
+
 -- Insert departments
 INSERT INTO department (dept_id, dept_name, building, budget)
 VALUES
