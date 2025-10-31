@@ -21,7 +21,7 @@ VALUES
 -- Insert courses
 INSERT INTO course (course_id, title, credits)
 VALUES
-('CS101', 'Intro to Programming', 3);
+('CS201', 'Super Programming', 4);
 
 -- Insert classrooms
 INSERT INTO classroom (building, room_number, capacity)
