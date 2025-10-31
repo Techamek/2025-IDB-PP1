@@ -122,3 +122,75 @@ CREATE TABLE prereq (
     FOREIGN KEY (prereq_id) REFERENCES course(course_id)
         ON DELETE CASCADE
 );
+
+CREATE TABLE under (
+    major_id CHAR(5),
+    dept_id CHAR(5),
+    PRIMARY KEY (major_id, dept_id),
+    FOREIGN KEY (major_id) REFERENCES major(major_id),
+    FOREIGN KEY (dept_id) REFERENCES department(dept_id)
+);
+
+CREATE TABLE declared (
+    student_id CHAR(5),
+    major_id CHAR(5),
+    PRIMARY KEY (student_id, major_id),
+    FOREIGN KEY (student_id) REFERENCES major(student_id),
+    FOREIGN KEY (major_id) REFERENCES department(major_id)
+);
+
+CREATE TABLE enrolled (
+    student_id CHAR(5),
+    enrollment_id INT,
+    PRIMARY KEY (student_id, enrollment_id),
+    FOREIGN KEY (student_id) REFERENCES major(student_id),
+    FOREIGN KEY (enrollment_id) REFERENCES department(enrollment_id)
+);
+
+CREATE TABLE employed (
+    instructor_id CHAR(5),
+    dept_id CHAR(5),
+    PRIMARY KEY (instructor_id, dept_id),
+    FOREIGN KEY (instructor_id) REFERENCES major(instructor_id),
+    FOREIGN KEY (dept_id) REFERENCES department(dept_id)
+);
+
+CREATE TABLE held_in (
+    section_id INT,
+    room_id INT,
+    PRIMARY KEY (section_id, room_id),
+    FOREIGN KEY (section_id) REFERENCES major(section_id),
+    FOREIGN KEY (room_id) REFERENCES department(room_id)
+);
+
+CREATE TABLE is_offered (
+    section_id INT,
+    room_id INT,
+    PRIMARY KEY (section_id, room_id),
+    FOREIGN KEY (section_id) REFERENCES major(section_id),
+    FOREIGN KEY (room_id) REFERENCES department(room_id)
+);
+
+CREATE TABLE held_during (
+    section_id INT,
+    time_slot_id varchar(5),
+    PRIMARY KEY (section_id, time_slot_id),
+    FOREIGN KEY (section_id) REFERENCES major(section_id),
+    FOREIGN KEY (time_slot_id) REFERENCES department(time_slot_id)
+);
+
+CREATE TABLE has_sections (
+    section_id INT,
+    course_id char(7),
+    PRIMARY KEY (section_id, course_id),
+    FOREIGN KEY (section_id) REFERENCES major(section_id),
+    FOREIGN KEY (course_id) REFERENCES department(course_id)
+);
+
+CREATE TABLE has_course (
+    dept_id       CHAR(5),
+    course_id     char(7),
+    PRIMARY KEY (dept_id, course_id),
+    FOREIGN KEY (dept_id) REFERENCES major(dept_id),
+    FOREIGN KEY (course_id) REFERENCES department(course_id)
+);
