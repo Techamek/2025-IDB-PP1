@@ -62,7 +62,7 @@ VALUES
 ('CS201', 'CS101');
 
 -- Major in a dept
-INSERT INTO under (major_id, prereq_id)
+INSERT INTO under (major_id, dept_id)
 VALUES
 ('M01', 'D01');
 
