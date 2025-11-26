@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h2>Available Actions</h2>
+
+{% if role == "Administrator" %}
+    <button onclick="location.href='/crud_course'">CRUD Course</button><br>
+    <button onclick="location.href='/crud_section'">CRUD Section</button><br>
+    <button onclick="location.href='/crud_classroom'">CRUD Classroom</button><br>
+    <button onclick="location.href='/crud_department'">CRUD Department</button><br>
+    <button onclick="location.href='/crud_timeslot'">CRUD Time Slot</button><br>
+    <button onclick="location.href='/crud_instructor'">CRUD Instructor</button><br>
+    <button onclick="location.href='/crud_student'">CRUD Student</button><br>
+    <button onclick="location.href='/assign_teacher'">Assign/Modify/Remove Teachers</button><br>
+
+{% elif role == "Instructor" %}
+    <button onclick="location.href='/submit_grades'">Submit Grades</button><br>
+    <button onclick="location.href='/change_grades'">Change Grades</button><br>
+    <button onclick="location.href='/add_advisor'">Add Students as Advisor</button><br>
+    <button onclick="location.href='/remove_advisor'">Remove Students as Advisor</button><br>
+    <button onclick="location.href='/modify_prereqs'">Modify Course Prerequisites</button><br>
+    <button onclick="location.href='/remove_from_section'">Remove Student</button><br>
+    <button onclick="location.href='/section_roster'">Check Section Roster</button><br>
+    <button onclick="location.href='/teaching_sections'">Check Sections Teaching</button><br>
+
+{% elif role == "Student" %}
+    <button onclick="location.href='/register_classes'">Register for Classes</button><br>
+    <button onclick="location.href='/drop_classes'">Drop Classes</button><br>
+    <button onclick="location.href='/check_final_grade'">Check Final Grades</button><br>
+    <button onclick="location.href='/check_courses'">Check Courses by Semester</button><br>
+    <button onclick="location.href='/section_info'">Check Section Info</button><br>
+    <button onclick="location.href='/advisor_info'">Check Advisor Info</button><br>
+    <button onclick="location.href='/modify_info'">Modify Personal Info</button><br>
+{% endif %}
+
+{% endblock %}
