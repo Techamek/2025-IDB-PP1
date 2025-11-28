@@ -1,0 +1,61 @@
+{% extends 'include/layout.html' %}
+{% block content %}
+<div class="container">
+	<form action="/newstudent" method="POST">
+		<p>
+		<h2>New Student:</h2>
+		<div class="mb-3">
+			<label for="formGroupExampleInput" class="form-label">First Name</label>
+			<input type="text" class="form-control" id="formGroupExampleInput" placeholder="First Name" name="firstName">
+		</div>
+        <div class="mb-3">
+			<label for="formGroupExampleInput" class="form-label">Middle Name</label>
+			<input type="text" class="form-control" id="formGroupExampleInput" placeholder="Middle Name" name="middleName">
+		</div>
+        <div class="mb-3">
+			<label for="formGroupExampleInput" class="form-label">Last Name</label>
+			<input type="text" class="form-control" id="formGroupExampleInput" placeholder="Last Name" name="lastName">
+		</div>
+		<div class="mb-3">
+			<label for="formGroupExampleInput2" class="form-label">ID</label>
+			<input type="text" class="form-control" id="formGroupExampleInput2" placeholder="ID" name="id">
+		</div>
+		<div class="mb-3">
+			<label for="depts">Choose a Department:</label>
+			<select name="dept" id="dept">
+				{% for dept in data %}
+				<option value="{{ dept }}">{{ dept }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<form method="POST" action="/newstudent">
+			<label for="transfer">Are you a transfer student?</label>
+			<select name="transfer" id="transfer" onchange="toggleCredits()">
+				<option value="">Select...</option>
+				<option value="yes">Yes</option>
+				<option value="no">No</option>
+			</select>
+
+			<div class="mb-3" id="creditDiv" style="display:none;">
+				<label for="formGroupExampleInput2" class="form-label">Credit Hours</label>
+				<input type="text" class="form-control" id="formGroupExampleInput2" placeholder="Credit"
+					name="tot_cred">
+			</div>
+
+			<button type="submit" class="btn btn-primary">Create New</button>
+		</form>
+
+		<script>
+			function toggleCredits() {
+				const transfer = document.getElementById('transfer').value;
+				const creditDiv = document.getElementById('creditDiv');
+
+				if (transfer === 'yes') {
+					creditDiv.style.display = 'block';
+				} else {
+					creditDiv.style.display = 'none';
+				}
+			}
+		</script>
+</div>
+{% endblock %}

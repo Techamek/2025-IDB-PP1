@@ -1,0 +1,46 @@
+{% extends 'include/layout.html' %}
+{% block content %}
+<div class="container">
+    <h1>
+        Schedule for {{ name }} ({{ student_id }})
+    </h1>
+    <form method="get" action="/schedule">
+        <input type="hidden" name="student_id" value="{{ student_id }}">
+        <input type="hidden" name="name" value="{{ name }}">
+
+        <label for="year">Filter by Year:</label>
+        <select name="year" id="year" onchange="this.form.submit()">
+            <option value="">All Years</option>
+            {% for year in years %}
+            <option value="{{ year }}" {% if year|string==request.args.get('year') %}selected{% endif %}>
+                {{ year }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="container">
+    <table cellpadding="5" cellspacing="5" class="table table-hover">
+        <tr>
+            <th>Course ID</th>
+            <th>Semester</th>
+            <th>Year</th>
+        </tr>
+        {% for row in data %}
+        <tr>
+            {% for d in row %}
+            <td>{{d}}</td>
+
+            {% endfor %}
+
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+
+
+
+{% endblock %}
