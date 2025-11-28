@@ -63,6 +63,7 @@ def register():
         password = request.form['password']
         email = request.form['email']
         role = request.form['role']
+        id = request.form['id']
 
         print(username, password, email, role)
         cursor = db.cursor()
@@ -85,9 +86,15 @@ def register():
             print("creating account")
             print(username, hashed_password, email, role)            
             cursor = db.cursor()
-            sql = "insert into accounts values (%s, %s, %s, %s, %s)"            
+            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
             cursor.execute(sql, [None, username, hashed_password, email, role])
             data = cursor.fetchall()
+            if(role=="Instructor"):
+                sql2 = "insert into instructor values (%s, %s, %s, %s, %s)"
+                cursor.execute(sql2, [id, None, None, None, None])   
+            elif(role=="Student"):
+                sqlRole = "insert into student values (%s, %s, %s, %s, %s)"
+                cursor.execute(sql2, [id, None, None, None, None, None])
             print(data)
             msg = 'You have successfully registered!'
             db.commit()
