@@ -93,7 +93,7 @@ def register():
                 sql2 = "insert into instructor values (%s, %s, %s, %s, %s)"
                 cursor.execute(sql2, [id, None, None, None, None])   
             elif(role=="Student"):
-                sqlRole = "insert into student values (%s, %s, %s, %s, %s)"
+                sql2 = "insert into student values (%s, %s, %s, %s, %s)"
                 cursor.execute(sql2, [id, None, None, None, None, None])
             print(data)
             msg = 'You have successfully registered!'
