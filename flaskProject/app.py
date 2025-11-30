@@ -23,41 +23,77 @@ def base():
 @app.route('/pythonlogin/', methods=['GET', 'POST'])
 def login():
     msg = ''
+    
     if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
         username = request.form['username']
         password = request.form['password']        
         cursor = db.cursor()
-        #safe way to create query
-        #parameterized query
-        sql = "SELECT * FROM accounts WHERE username = %s"        
-        cursor.execute(sql, [username])
-        print("good query:", sql, [username])
-        #unsafe way to create a query
-        #DON'T DO IT!
-        #sql = f"select * from accounts where username = " +  username
-        #print(sql)
-        #print("BAD QUERY = \n", sql)
-        #cursor.execute(sql)        
+
+        cursor.execute("SELECT * FROM accounts WHERE username = %s", [username])
         account = cursor.fetchone()
         cursor.close()
-        print(account)
 
-        # Check if account exists and if password is correct
+        # Check if account exists and password is correct
         if account and check_password_hash(account[2], password):
+
+            # Basic session info from accounts table
             session['loggedin'] = True
             session['id'] = account[0] 
             session['username'] = account[1]
-            session['role'] = account[4]
+            session['role'] = account[4]   
+            session['user_ref'] = account[5]   # student_id or instructor_id
+
+            role = account[4]
+
+            cursor = db.cursor()
+
+            if role == "Student":
+                cursor.execute("""
+                    SELECT student_id, first_name, middle_name, last_name, enrollment_year, total_credits
+                    FROM student
+                    WHERE student_id = %s
+                """, [session['user_ref']])  # <-- CORRECT: use user_ref, NOT username
+
+                student = cursor.fetchone()
+
+                if student:
+                    session['student_id'] = student[0]
+                    session['first_name'] = student[1]
+                    session['middle_name'] = student[2]
+                    session['last_name'] = student[3]
+                    session['year'] = student[4]
+                    session['credits'] = student[5]
+
+
+            elif role == "Instructor":
+                cursor.execute("""
+                    SELECT instructor_id, first_name, middle_name, last_name, salary
+                    FROM instructor
+                    WHERE instructor_id = %s
+                """, [session['user_ref']])  # <-- CORRECT: use user_ref
+
+                instructor = cursor.fetchone()
+
+                if instructor:
+                    session['instructor_id'] = instructor[0]
+                    session['first_name'] = instructor[1]
+                    session['middle_name'] = instructor[2]
+                    session['last_name'] = instructor[3]
+                    session['salary'] = instructor[4]
+
+            cursor.close()
+
             return redirect(url_for('home'))
+
         else:
             msg = 'Incorrect username/password!'
     
     return render_template('index.html', msg=msg)
 
+
 @app.route("/pythonlogin/register", methods=["GET"])
 def register():
     return render_template("registerRole.html")
-
 
 # Register route
 @app.route('/pythonlogin/register', methods=['POST'])
@@ -70,48 +106,7 @@ def registerRole():
         return redirect("/register/instructor")
     elif role == "Student":
         return redirect("/register/student")
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form:
-        username = request.form['username']
-        password = request.form['password']
-        email = request.form['email']
-        role = request.form['role']
-        id = request.form['id']
-
-        print(username, password, email, role)
-        cursor = db.cursor()
-        sql = "SELECT * FROM accounts WHERE username = %s;"
-        cursor.execute(sql, [username])
-        account = cursor.fetchall()
-        print(account)
-        cursor.close()
-        if account:
-            msg = 'Account already exists!'
-        elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
-            msg = 'Invalid email address!'
-        elif not re.match(r'[A-Za-z0-9]+', username):
-            msg = 'Username must contain only characters and numbers!'
-        elif not username or not password or not email or not role:
-            msg = 'Please fill out the form!'
-        else:
-            # Hash the password before storing it
-            hashed_password = generate_password_hash(password)
-            print("creating account")
-            print(username, hashed_password, email, role)            
-            cursor = db.cursor()
-            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
-            cursor.execute(sql, [None, username, hashed_password, email, role])
-            data = cursor.fetchall()
-            if(role=="Instructor"):
-                sql2 = "insert into instructor values (%s, %s, %s, %s, %s)"
-                cursor.execute(sql2, [id, None, None, None, None])   
-            elif(role=="Student"):
-                sql2 = "insert into student values (%s, %s, %s, %s, %s)"
-                cursor.execute(sql2, [id, None, None, None, None, None])
-            print(data)
-            msg = 'You have successfully registered!'
-            db.commit()
-            cursor.close()
-    elif request.method == 'POST':
+    else:
         msg = 'Please fill out the form!'
     
     return render_template('registerRole.html', msg=msg)
@@ -189,8 +184,8 @@ def register_instructor():
             print("creating account")
             print(username, hashed_password, email, role)            
             cursor = db.cursor()
-            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
-            cursor.execute(sql, [None, username, hashed_password, email, role])
+            sql = "insert into accounts values (%s, %s, %s, %s, %s, %s)"  
+            cursor.execute(sql, [None, username, hashed_password, email, role, id])
             sql = "insert into instructor values (%s, %s, %s, %s, %s)"
             cursor.execute(sql, [id, fname, mname, lname, salary])
             data = cursor.fetchall()
@@ -237,8 +232,8 @@ def register_student():
             print("creating account")
             print(username, hashed_password, email, role)            
             cursor = db.cursor()
-            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
-            cursor.execute(sql, [None, username, hashed_password, email, role])
+            sql = "insert into accounts values (%s, %s, %s, %s, %s, %s)"  
+            cursor.execute(sql, [None, username, hashed_password, email, role, id])
             sql = "insert into student values (%s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, [id, fname, mname, lname, year, creds])
             data = cursor.fetchall()
@@ -264,7 +259,8 @@ def logout():
 @app.route('/pythonlogin/home')
 def home():
     if 'loggedin' in session:
-        return render_template('home.html', username=session['username'], role=session['role'])
+        role = session['role']
+        return render_template('actions.html', role=role)
     return redirect(url_for('login'))
 
 # Profile route
@@ -275,15 +271,6 @@ def profile():
         cursor.execute('SELECT * FROM accounts WHERE id = %s', [session['id']])
         account = cursor.fetchone()
         return render_template('profile.html', account=account)
-    return redirect(url_for('login'))
-
-@app.route('/actions')
-def actions():
-    if 'loggedin' in session:
-        role = session['role']
-        if role is None:
-            redirect(url_for("login"))
-        return render_template("actions.html", role=role)
     return redirect(url_for('login'))
 
 @app.route('/register_classes', methods=['POST', 'GET'])
