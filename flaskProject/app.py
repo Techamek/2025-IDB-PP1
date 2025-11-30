@@ -201,7 +201,20 @@ def register_instructor():
 @app.route("/register/student", methods=["GET", "POST"])
 def register_student():
     msg = ''
-    if request.method == "POST"  and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'id' in request.form and 'fname' in request.form and 'mname' in request.form and 'lname' in request.form and 'year' in request.form and 'creds' in request.form:
+    edited=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT dept_name as dept_name from department;"
+        cursor.execute(sql)
+        data = cursor.fetchall()        
+        cursor.close()
+        edited = []
+
+        for i in data:
+            edited.append(i[0])
+
+        return render_template('register/student.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'id' in request.form and 'fname' in request.form and 'mname' in request.form and 'lname' in request.form and 'year' in request.form and 'creds' in request.form and 'dept' in request.form:
         username = request.form['username']
         password = request.form['password']
         email = request.form['email']
@@ -211,6 +224,7 @@ def register_student():
         lname = request.form['lname']
         year = request.form['year']
         creds = request.form['creds']
+        dept = request.form['dept']
         cursor = db.cursor()
         sql = "SELECT * FROM accounts WHERE username = %s;"
         cursor.execute(sql, [username])
@@ -234,8 +248,8 @@ def register_student():
             cursor = db.cursor()
             sql = "insert into accounts values (%s, %s, %s, %s, %s, %s)"  
             cursor.execute(sql, [None, username, hashed_password, email, role, id])
-            sql = "insert into student values (%s, %s, %s, %s, %s, %s)"
-            cursor.execute(sql, [id, fname, mname, lname, year, creds])
+            sql = "insert into student values (%s, %s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, [id, fname, mname, lname, year, creds, dept])
             data = cursor.fetchall()
             print(data)
             msg = 'You have successfully registered!'
@@ -243,7 +257,16 @@ def register_student():
             cursor.close()
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
-    return render_template("register/student.html", msg=msg)
+    cursor = db.cursor()
+    sql = "SELECT dept_name as dept_name from department;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for i in data:
+        edited.append(i[0])
+    return render_template("register/student.html", data = edited, msg=msg)
 
 
 # Logout route
@@ -280,6 +303,19 @@ def profile():
 @app.route('/modify_info_stud', methods=['POST', 'GET'])
 def modify_info_stud():
     msg = ''
+    edited=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT dept_name as dept_name from department;"
+        cursor.execute(sql)
+        data = cursor.fetchall()        
+        cursor.close()
+        edited = []
+
+        for i in data:
+            edited.append(i[0])
+
+        return render_template('actions/student/modify_info.html', data = edited, msg=msg)
     if 'loggedin' not in session:
         return redirect(url_for('login'))
 
@@ -298,7 +334,8 @@ def modify_info_stud():
                 'middle_name': request.form.get('mname'),
                 'last_name': request.form.get('lname'),
                 'total_credits': request.form.get('creds'),
-                'enrollment_year': request.form.get('year')
+                'enrollment_year': request.form.get('year'),
+                'dept_name': request.form.get('dept')
             }
             # Filter out empty fields
             update_fields = {k: v for k, v in student_data.items() if v not in (None, '')}
@@ -341,7 +378,16 @@ def modify_info_stud():
         finally:
             cursor.close()
 
-    return render_template("actions/student/modify_info.html", msg=msg)
+    cursor = db.cursor()
+    sql = "SELECT dept_name as dept_name from department;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for i in data:
+        edited.append(i[0])
+    return render_template("actions/student/modify_info.html", data=edited, msg=msg)
 
 @app.route('/register_classes', methods=['GET', 'POST'])
 def register_classes():
