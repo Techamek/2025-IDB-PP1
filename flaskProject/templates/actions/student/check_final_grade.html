@@ -1,13 +1,13 @@
 {% extends 'layout.html' %}
 
-{% block title %}Check Courses{% endblock %}
+{% block title %}Modify Info{% endblock %}
 
 {% block content %}
 <div class="container">
     <h1>
-        Schedule for {{ name }} ({{ student_id }})
+        Final Grades for {{ name }} ({{ student_id }})
     </h1>
-    <form method="get" action="{{ url_for('check_courses') }}">
+    <form method="get" action="{{ url_for('check_final_grade') }}">
         <input type="hidden" name="student_id" value="{{ student_id }}">
         <input type="hidden" name="name" value="{{ name }}">
 
@@ -33,14 +33,18 @@
             <th>Course Name</th>
             <th>Year</th>
             <th>Semester</th>
+            <th>Grade</th>
         </tr>
         {% for row in data %}
+        {% if row[4] %}
         <tr>
             <td>{{ row[0] }}</td> <!-- course_id -->
             <td>{{ row[1] }}</td> <!-- course title -->
             <td>{{ row[2] }}</td> <!-- semester -->
             <td>{{ row[3] }}</td> <!-- year -->
+            <td>{{ row[4] }}</td> <!-- grade -->
         </tr>
+        {% endif %}
         {% endfor %}
     </table>
 
