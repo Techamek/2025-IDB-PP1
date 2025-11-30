@@ -380,6 +380,7 @@ def register_classes():
         courses=courses
     )
 
+#helper for register classes
 @app.route('/get_sections/<course_id>')
 def get_sections(course_id):
     cursor = db.cursor()
@@ -406,37 +407,35 @@ def get_sections(course_id):
     return jsonify(data)
 
 @app.route('/check_final_grade', methods=['GET', 'POST'])
-
-@app.route('/check_courses', methods=['GET'])
-def check_courses():
+def check_final_grade():
     if 'loggedin' not in session or session.get('role') != "Student":
         return redirect(url_for('login'))
 
     student_id = session['student_id']
     name = f"{session['fname']} {session['lname']}"
-    selected_year = request.args.get('year')
+    selected_semester = request.args.get('semester')
 
     cursor = db.cursor()
 
     # Get all years the student has courses in (for the dropdown)
     cursor.execute("""
-        SELECT DISTINCT s.year
+        SELECT DISTINCT s.semester
         FROM enrolled e
         JOIN enrollment en ON e.enrollment_id = en.enrollment_id
         JOIN is_offered io ON io.enrollment_id = en.enrollment_id
         JOIN section s ON s.section_id = io.section_id
         WHERE e.student_id = %s
-        ORDER BY s.year DESC
+        ORDER BY s.semester DESC
     """, (student_id,))
-    years = [row[0] for row in cursor.fetchall()]
+    semesters = [row[0] for row in cursor.fetchall()]
 
     # Query for student schedule with course title and grade
     query = """
         SELECT 
             c.course_id,
             c.title,
-            s.semester,
             s.year,
+            s.semester,
             en.grade
         FROM enrolled e
         JOIN enrollment en ON e.enrollment_id = en.enrollment_id
@@ -448,11 +447,72 @@ def check_courses():
     """
     params = [student_id]
 
-    if selected_year:
-        query += " AND s.year = %s"
-        params.append(selected_year)
+    if selected_semester:
+        query += " AND s.semester = %s"
+        params.append(selected_semester)
 
-    query += " ORDER BY s.year DESC, s.semester"
+    query += " ORDER BY s.semester DESC, s.year"
+
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+
+    cursor.close()
+
+    return render_template(
+        '/actions/student/check_final_grade.html',
+        data=data,
+        semesters=semesters,
+        student_id=student_id,
+        name=name
+    )
+
+
+@app.route('/check_courses', methods=['GET'])
+def check_courses():
+    if 'loggedin' not in session or session.get('role') != "Student":
+        return redirect(url_for('login'))
+
+    student_id = session['student_id']
+    name = f"{session['fname']} {session['lname']}"
+    selected_semester = request.args.get('semester')
+
+    cursor = db.cursor()
+
+    # Get all years the student has courses in (for the dropdown)
+    cursor.execute("""
+        SELECT DISTINCT s.semester
+        FROM enrolled e
+        JOIN enrollment en ON e.enrollment_id = en.enrollment_id
+        JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+        JOIN section s ON s.section_id = io.section_id
+        WHERE e.student_id = %s
+        ORDER BY s.semester DESC
+    """, (student_id,))
+    semesters = [row[0] for row in cursor.fetchall()]
+
+    # Query for student schedule with course title and grade
+    query = """
+        SELECT 
+            c.course_id,
+            c.title,
+            s.year,
+            s.semester,
+            en.grade
+        FROM enrolled e
+        JOIN enrollment en ON e.enrollment_id = en.enrollment_id
+        JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+        JOIN section s ON s.section_id = io.section_id
+        JOIN has_sections hs ON hs.section_id = s.section_id
+        JOIN course c ON c.course_id = hs.course_id
+        WHERE e.student_id = %s
+    """
+    params = [student_id]
+
+    if selected_semester:
+        query += " AND s.semester = %s"
+        params.append(selected_semester)
+
+    query += " ORDER BY s.semester DESC, s.year"
 
     cursor.execute(query, params)
     data = cursor.fetchall()
@@ -462,7 +522,7 @@ def check_courses():
     return render_template(
         '/actions/student/check_courses.html',
         data=data,
-        years=years,
+        semesters=semesters,
         student_id=student_id,
         name=name
     )
