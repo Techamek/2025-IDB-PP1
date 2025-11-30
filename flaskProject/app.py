@@ -687,13 +687,22 @@ def crud_section():
         code = request.form['Ccode']
         semester = request.form['Csem']
         year = request.form['Cyear']
+        course = request.form['CcourseID']
         cursor = db.cursor()
-        sql = "SELECT * FROM section WHERE sec_code = %s AND semester = %s AND year = %s;"
-        cursor.execute(sql, [code, semester, year])
-        course = cursor.fetchall()
-        print(course)
+        sql ="""
+        SELECT s.section_id
+        FROM section s
+        JOIN has_sections h ON s.section_id = h.section_id
+        WHERE s.sec_code = %s
+        AND s.semester = %s
+        AND s.year = %s
+        AND h.course_id = %s
+        """
+        cursor.execute(sql, [code, semester, year, course])
+        result = cursor.fetchall()
+        print(result)
         cursor.close()
-        if course:
+        if result:
             msg = 'Section already exists!'
         else:
             print("creating section")
@@ -703,6 +712,8 @@ def crud_section():
             cursor.execute(sql, [id, code, semester, year])
             data = cursor.fetchall()
             print(data)
+            sql = "insert into has_sections values (%s, %s)"
+            cursor.execute(sql, [id, course])
             msg = 'Section Created!'
             db.commit()
             cursor.close()
