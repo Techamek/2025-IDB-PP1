@@ -1,10 +1,13 @@
-{% extends 'include/layout.html' %}
+{% extends 'layout.html' %}
+
+{% block title %}Modify Info{% endblock %}
+
 {% block content %}
 <div class="container">
     <h1>
         Schedule for {{ name }} ({{ student_id }})
     </h1>
-    <form method="get" action="/schedule">
+    <form method="get" action="{{ url_for('check_courses') }}">
         <input type="hidden" name="student_id" value="{{ student_id }}">
         <input type="hidden" name="name" value="{{ name }}">
 
@@ -18,25 +21,31 @@
             {% endfor %}
         </select>
     </form>
+    <div class="links">
+        <a href="{{ url_for('home') }}">Back</a>
+    </div>
 </div>
 
 <div class="container">
     <table cellpadding="5" cellspacing="5" class="table table-hover">
         <tr>
             <th>Course ID</th>
+            <th>Course Name</th>
             <th>Semester</th>
             <th>Year</th>
+            <th>Grade</th>
         </tr>
         {% for row in data %}
         <tr>
-            {% for d in row %}
-            <td>{{d}}</td>
-
-            {% endfor %}
-
+            <td>{{ row[0] }}</td> <!-- course_id -->
+            <td>{{ row[1] }}</td> <!-- course title -->
+            <td>{{ row[2] }}</td> <!-- semester -->
+            <td>{{ row[3] }}</td> <!-- year -->
+            <td>{{ row[4] if row[4] else '-' }}</td> <!-- grade -->
         </tr>
         {% endfor %}
     </table>
+
 </div>
 
 
