@@ -54,11 +54,23 @@ def login():
     
     return render_template('index.html', msg=msg)
 
-# Register route
-@app.route('/pythonlogin/register', methods=['GET', 'POST'])
+@app.route("/pythonlogin/register", methods=["GET"])
 def register():
+    return render_template("registerRole.html")
+
+
+# Register route
+@app.route('/pythonlogin/register', methods=['POST'])
+def registerRole():
     msg = ''
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'role' in request.form:
+    role = request.form['role']
+    if role == "Administrator":
+        return redirect("/register/admin")
+    elif role == "Instructor":
+        return redirect("/register/instructor")
+    elif role == "Student":
+        return redirect("/register/student")
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form:
         username = request.form['username']
         password = request.form['password']
         email = request.form['email']
@@ -102,7 +114,142 @@ def register():
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     
-    return render_template('register.html', msg=msg)
+    return render_template('registerRole.html', msg=msg)
+
+@app.route("/register/admin", methods=["GET", "POST"])
+def register_admin():
+    msg = ''
+    if request.method == "POST"  and 'username' in request.form and 'password' in request.form and 'email' in request.form:
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        cursor = db.cursor()
+        sql = "SELECT * FROM accounts WHERE username = %s;"
+        cursor.execute(sql, [username])
+        account = cursor.fetchall()
+        print(account)
+        cursor.close()
+        if account:
+            msg = 'Account already exists!'
+        elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+            msg = 'Invalid email address!'
+        elif not re.match(r'[A-Za-z0-9]+', username):
+            msg = 'Username must contain only characters and numbers!'
+        elif not username or not password or not email:
+            msg = 'Please fill out the form!'
+        else:
+            role = "Administrator"
+            # Hash the password before storing it
+            hashed_password = generate_password_hash(password)
+            print("creating account")
+            print(username, hashed_password, email, role)            
+            cursor = db.cursor()
+            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
+            cursor.execute(sql, [None, username, hashed_password, email, role])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'You have successfully registered!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    return render_template("register/admin.html", msg=msg)
+
+
+@app.route("/register/instructor", methods=["GET", "POST"])
+def register_instructor():
+    msg = ''
+    if request.method == "POST"  and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'id' in request.form and 'fname' in request.form and 'mname' in request.form and 'lname' in request.form and 'salary' in request.form:
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        id = request.form['id']
+        fname = request.form['fname']
+        mname = request.form['mname']
+        lname = request.form['lname']
+        salary = request.form['salary']
+        cursor = db.cursor()
+        sql = "SELECT * FROM accounts WHERE username = %s;"
+        cursor.execute(sql, [username])
+        account = cursor.fetchall()
+        print(account)
+        cursor.close()
+        if account:
+            msg = 'Account already exists!'
+        elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+            msg = 'Invalid email address!'
+        elif not re.match(r'[A-Za-z0-9]+', username):
+            msg = 'Username must contain only characters and numbers!'
+        elif not username or not password or not email:
+            msg = 'Please fill out the form!'
+        else:
+            role = "Instructor"
+            # Hash the password before storing it
+            hashed_password = generate_password_hash(password)
+            print("creating account")
+            print(username, hashed_password, email, role)            
+            cursor = db.cursor()
+            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
+            cursor.execute(sql, [None, username, hashed_password, email, role])
+            sql = "insert into instructor values (%s, %s, %s, %s, %s)"
+            cursor.execute(sql, [id, fname, mname, lname, salary])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'You have successfully registered!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    return render_template("register/instructor.html", msg=msg)
+
+
+@app.route("/register/student", methods=["GET", "POST"])
+def register_student():
+    msg = ''
+    if request.method == "POST"  and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'id' in request.form and 'fname' in request.form and 'mname' in request.form and 'lname' in request.form and 'year' in request.form and 'creds' in request.form:
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        id = request.form['id']
+        fname = request.form['fname']
+        mname = request.form['mname']
+        lname = request.form['lname']
+        year = request.form['year']
+        creds = request.form['creds']
+        cursor = db.cursor()
+        sql = "SELECT * FROM accounts WHERE username = %s;"
+        cursor.execute(sql, [username])
+        account = cursor.fetchall()
+        print(account)
+        cursor.close()
+        if account:
+            msg = 'Account already exists!'
+        elif not re.match(r'[^@]+@[^@]+\.[^@]+', email):
+            msg = 'Invalid email address!'
+        elif not re.match(r'[A-Za-z0-9]+', username):
+            msg = 'Username must contain only characters and numbers!'
+        elif not username or not password or not email:
+            msg = 'Please fill out the form!'
+        else:
+            role = "Student"
+            # Hash the password before storing it
+            hashed_password = generate_password_hash(password)
+            print("creating account")
+            print(username, hashed_password, email, role)            
+            cursor = db.cursor()
+            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
+            cursor.execute(sql, [None, username, hashed_password, email, role])
+            sql = "insert into student values (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, [id, fname, mname, lname, year, creds])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'You have successfully registered!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    return render_template("register/student.html", msg=msg)
+
 
 # Logout route
 @app.route('/pythonlogin/logout')
