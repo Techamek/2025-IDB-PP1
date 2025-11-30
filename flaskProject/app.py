@@ -607,6 +607,180 @@ def modify_info_inst():
 #  ADMIN STUFF
 ##########################################
 
+@app.route('/crud_course', methods=['POST', 'GET'])
+def crud_course():
+    edited=''
+    msg=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT title FROM course;"
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        cursor.close()
+
+        edited = []
+
+        for i in data:
+            edited.append(i[0])
+
+        return render_template('actions/admin/crud_course.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'Cid' in request.form: #we creating out here
+        id = request.form['Cid']
+        title = request.form['Ctitle']
+        credits = request.form['Ccredits']
+        cursor = db.cursor()
+        sql = "SELECT * FROM course WHERE title = %s;"
+        cursor.execute(sql, [title])
+        course = cursor.fetchall()
+        print(course)
+        cursor.close()
+        if course:
+            msg = 'Course already exists!'
+        else:
+            print("creating course")
+            print(id, title, credits)            
+            cursor = db.cursor()
+            sql = "insert into course values (%s, %s, %s)"
+            cursor.execute(sql, [id, title, credits])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'Course Created!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    cursor = db.cursor()
+    sql = "SELECT title from course;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for i in data:
+        edited.append(i[0])
+    return render_template("actions/admin/crud_course.html",data=edited, msg=msg)
+
+@app.route('/crud_section', methods=['POST', 'GET'])
+def crud_section():
+    edited=''
+    msg=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = """
+        SELECT s.sec_code, s.semester, s.year, h.course_id, c.title
+        FROM section s
+        JOIN has_sections h ON s.section_id = h.section_id
+        JOIN course c ON h.course_id = c.course_id
+        """
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        cursor.close()
+
+        edited = []
+
+        for sec_code, semester, year, course_id, course_title in data:
+            edited.append(f"{semester} {year}: Section {sec_code} — {course_id} ({course_title})")
+
+        return render_template('actions/admin/crud_section.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'Cid' in request.form: #we creating out here
+        id = request.form['Cid']
+        code = request.form['Ccode']
+        semester = request.form['Csem']
+        year = request.form['Cyear']
+        cursor = db.cursor()
+        sql = "SELECT * FROM section WHERE sec_code = %s AND semester = %s AND year = %s;"
+        cursor.execute(sql, [code, semester, year])
+        course = cursor.fetchall()
+        print(course)
+        cursor.close()
+        if course:
+            msg = 'Section already exists!'
+        else:
+            print("creating section")
+            print(id, code, semester, year)            
+            cursor = db.cursor()
+            sql = "insert into section values (%s, %s, %s, %s)"
+            cursor.execute(sql, [id, code, semester, year])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'Section Created!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    cursor = db.cursor()
+    sql = """
+    SELECT s.sec_code, s.semester, s.year, h.course_id, c.title
+    FROM section s
+    JOIN has_sections h ON s.section_id = h.section_id
+    JOIN course c ON h.course_id = c.course_id
+    """
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    cursor.close()
+
+    edited = []
+
+    for sec_code, semester, year, course_id, course_title in data:
+        edited.append(f"{semester} {year}: Section {sec_code} — {course_id} ({course_title})")
+
+    return render_template("actions/admin/crud_section.html",data=edited, msg=msg)
+
+@app.route('/crud_classroom', methods=['POST', 'GET'])
+def crud_classroom():
+    edited=''
+    msg=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT building, room_number FROM classroom;"
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        cursor.close()
+
+        edited = []
+
+        for building, room in data:
+            edited.append(f"{building}-{room}")
+
+        return render_template('actions/admin/crud_classroom.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'Cid' in request.form: #we creating out here
+        id = request.form['Cid']
+        building = request.form['Cbuilding']
+        number = request.form['Cnumber']
+        cap = request.form['Ccap']
+        cursor = db.cursor()
+        sql = "SELECT * FROM classroom WHERE building = %s AND room_number = %s"
+        cursor.execute(sql, (building, number))
+        room = cursor.fetchall()
+        print(room)
+        cursor.close()
+        if room:
+            msg = 'Classroom already exists!'
+        else:
+            print("creating Classroom")
+            print(id, building, number, cap)            
+            cursor = db.cursor()
+            sql = "insert into classroom values (%s, %s, %s, %s)"
+            cursor.execute(sql, [id, building, number, cap])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'Classroom Created!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    cursor = db.cursor()
+    sql = "SELECT building, room_number FROM classroom;"
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    cursor.close()
+
+    edited = []
+
+    for building, room in data:
+        edited.append(f"{building}-{room}")
+    return render_template("actions/admin/crud_classroom.html",data=edited, msg=msg)
+
 @app.route('/crud_department', methods=['POST', 'GET'])
 def crud_department():
     edited=''
@@ -661,6 +835,15 @@ def crud_department():
         edited.append(i[0])
     return render_template("actions/admin/crud_department.html",data=edited, msg=msg)
 
+@app.route('/crud_timeslot', methods=['POST', 'GET'])
+
+@app.route('/crud_instructor', methods=['POST', 'GET'])
+
+@app.route('/crud_student', methods=['POST', 'GET'])
+
+@app.route('/assign_teacher', methods=['POST', 'GET'])
+
+######################################################
 # Search form route
 @app.route('/searchform')
 def searchform():
