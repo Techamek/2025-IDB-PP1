@@ -19,7 +19,8 @@ CREATE TABLE student (
     middle_name    VARCHAR(30) NOT NULL,
     last_name      VARCHAR(30) NOT NULL,
     enrollment_year INT CHECK (enrollment_year BETWEEN 2000 AND 2099),
-    total_credits   INT DEFAULT 0 CHECK (total_credits >= 0)
+    total_credits   INT DEFAULT 0 CHECK (total_credits >= 0),
+    dept_name      VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE instructor (
