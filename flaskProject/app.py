@@ -206,14 +206,21 @@ def register_student():
         cursor = db.cursor()
         sql = "SELECT dept_name as dept_name from department;"
         cursor.execute(sql)
-        data = cursor.fetchall()        
-        cursor.close()
+        data = cursor.fetchall()      
         edited = []
 
         for i in data:
             edited.append(i[0])
 
-        return render_template('register/student.html', data = edited, msg=msg)
+        sql = "SELECT major_name from major;"
+        cursor.execute(sql)
+        data2 = cursor.fetchall()      
+        edited2 = []
+
+        for i in data2:
+            edited2.append(i[0])
+
+        return render_template('register/student.html', data = edited,data2=edited2, msg=msg)
     if request.method == "POST"  and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'id' in request.form and 'fname' in request.form and 'mname' in request.form and 'lname' in request.form and 'year' in request.form and 'creds' in request.form and 'dept' in request.form:
         username = request.form['username']
         password = request.form['password']
@@ -225,6 +232,7 @@ def register_student():
         year = request.form['year']
         creds = request.form['creds']
         dept = request.form['dept']
+        major = request.form['major']
         cursor = db.cursor()
         sql = "SELECT * FROM accounts WHERE username = %s;"
         cursor.execute(sql, [username])
@@ -250,8 +258,11 @@ def register_student():
             cursor.execute(sql, [None, username, hashed_password, email, role, id])
             sql = "insert into student values (%s, %s, %s, %s, %s, %s, %s)"
             cursor.execute(sql, [id, fname, mname, lname, year, creds, dept])
-            data = cursor.fetchall()
-            print(data)
+            sql = 'select major_id from major where major_name = %s'
+            cursor.execute(sql, [major])
+            majorID = cursor.fetchone()[0]
+            sql = "insert into declared values (%s, %s)"
+            cursor.execute(sql, [id, majorID])
             msg = 'You have successfully registered!'
             db.commit()
             cursor.close()
@@ -260,13 +271,20 @@ def register_student():
     cursor = db.cursor()
     sql = "SELECT dept_name as dept_name from department;"
     cursor.execute(sql)
-    data = cursor.fetchall()        
-    cursor.close()
+    data = cursor.fetchall()
     edited = []
 
     for i in data:
         edited.append(i[0])
-    return render_template("register/student.html", data = edited, msg=msg)
+
+    sql = "SELECT major_name from major;"
+    cursor.execute(sql)
+    data2 = cursor.fetchall()      
+    edited2 = []
+
+    for i in data2:
+        edited2.append(i[0])
+    return render_template("register/student.html", data = edited, data2=edited2, msg=msg)
 
 
 # Logout route
@@ -847,8 +865,139 @@ def crud_department():
     return render_template("actions/admin/crud_department.html",data=edited, msg=msg)
 
 @app.route('/crud_timeslot', methods=['POST', 'GET'])
+def crud_timeslot():
+    edited=''
+    msg=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT day, start_hr, start_min, end_hr, end_min from time_slot;"
+        cursor.execute(sql)
+        data = cursor.fetchall()        
+        cursor.close()
+        edited = []
+
+        for day, start_hr, start_min, end_hr, end_min in data:
+            edited.append(f"{day}, {start_hr}:{start_min}-{end_hr}:{end_min}")
+
+        return render_template('actions/admin/crud_timeslot.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'Cid' in request.form: #we creating out here
+        id = request.form['Cid']
+        day = request.form['Cday']
+        start_hr = request.form['Csh']
+        start_min = request.form['Csm']
+        end_hr = request.form['Ceh']
+        end_min = request.form['Cem']
+        sectionID = request.form['CsectionID']
+        cursor = db.cursor()
+        sql = """
+        SELECT * FROM time_slot WHERE day = %s
+        AND start_hr = %s
+        AND start_min = %s
+        AND end_hr = %s
+        AND end_min = %s;
+        """
+        cursor.execute(sql, [day, start_hr, start_min, end_hr, end_min])
+        result = cursor.fetchall()
+        print(result)
+        cursor.close()
+        if result:
+            msg = 'Account already exists!'
+        else:
+            # Hash the password before storing it
+            print("creating time slot")
+            print(id, day, start_hr, start_min, end_hr, end_min)            
+            cursor = db.cursor()
+            sql = "insert into time_slot values (%s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, [id, day, start_hr, start_min, end_hr, end_min])
+            sql = "insert into held_during values (%s, %s)"
+            cursor.execute(sql, [sectionID, id])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'Time Slot Created!'
+            db.commit()
+            cursor.close()
+    
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    cursor = db.cursor()
+    sql = "SELECT day, start_hr, start_min, end_hr, end_min from time_slot;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for i in data:
+        edited.append(f"{day}, {start_hr}:{start_min}-{end_hr}:{end_min}")
+    return render_template("actions/admin/crud_timeslot.html",data=edited, msg=msg)
 
 @app.route('/crud_instructor', methods=['POST', 'GET'])
+def crud_instructor():
+    edited=''
+    msg=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT first_name, middle_name, last_name from instructor;"
+        cursor.execute(sql)
+        data = cursor.fetchall()        
+        cursor.close()
+        edited = []
+
+        for fname, mname, lname in data:
+            edited.append(f"{lname}, {fname} {mname}")
+
+        return render_template('actions/admin/crud_instructor.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'Cid' in request.form: #we creating out here
+        id = request.form['Cid']
+        fname = request.form['Cfname']
+        mname = request.form['Cmname']
+        lname = request.form['Clname']
+        salary = request.form['Csalary']
+        dept = request.form['Cdept']
+        section = request.form['Csection']
+        student = request.form['Cstudent']
+        cursor = db.cursor()
+        sql = """
+        SELECT * FROM instructor WHERE first_name = %s
+        AND middle_name = %s
+        AND last_name = %s;
+        """
+        cursor.execute(sql, [fname, mname, lname])
+        result = cursor.fetchall()
+        print(result)
+        cursor.close()
+        if result:
+            msg = 'Account already exists!'
+        else:
+            # Hash the password before storing it
+            print("creating instructor")
+            print(id, fname, mname, lname, salary)            
+            cursor = db.cursor()
+            sql = "insert into instructor values (%s, %s, %s, %s, %s)"
+            cursor.execute(sql, [id, fname, mname, lname, salary])
+            sql = "insert into employed values (%s, %s)"
+            cursor.execute(sql, [id, dept])
+            sql = "insert into teaches values (%s, %s)"
+            cursor.execute(sql, [id, section])
+            sql = "insert into advisor values (%s, %s)"
+            cursor.execute(sql, [student, id])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'Instructor Created!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    cursor = db.cursor()
+    sql = "SELECT first_name, middle_name, last_name from instructor;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for fname, mname, lname in data:
+            edited.append(f"{lname}, {fname} {mname}")
+    return render_template("actions/admin/crud_instructor.html",data=edited, msg=msg)
+
 
 @app.route('/crud_student', methods=['POST', 'GET'])
 
