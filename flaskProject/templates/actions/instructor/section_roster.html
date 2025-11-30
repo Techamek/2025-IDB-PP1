@@ -1,0 +1,61 @@
+{% extends 'layout.html' %}
+
+{% block title %}Section Roster{% endblock %}
+
+{% block content %}
+<h1>Section Roster</h1>
+
+{% if msg %}
+    <div class="alert alert-info">{{ msg }}</div>
+{% endif %}
+
+<div class="card p-4 mb-4">
+    <form action="{{ url_for('section_roster') }}" method="POST">
+        <div class="mb-3">
+            <label class="form-label">Select a Section You Teach</label>
+            <select name="section_id" class="form-select" required>
+                <option value="">-- Select Section --</option>
+                {% for sec in sections %}
+                    {# sec = (section_id, sec_code, semester, year, course_id, title) #}
+                    {% set sec_id = sec[0] %}
+                    {% set sec_code = sec[1] %}
+                    {% set semester = sec[2] %}
+                    {% set year = sec[3] %}
+                    {% set course_id = sec[4] %}
+                    {% set title = sec[5] %}
+                    <option value="{{ sec_id }}"
+                        {% if selected_section_id and sec_id|string == selected_section_id|string %}selected{% endif %}>
+                        {{ semester }} {{ year }} — {{ course_id }} ({{ title }}) — Sec {{ sec_code }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">View Roster</button>
+    </form>
+</div>
+
+{% if roster %}
+    <h2>Enrolled Students</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in roster %}
+                {# row = (student_id, first_name, middle_name, last_name, grade) #}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[3] }}, {{ row[1] }} {{ row[2] }}</td>
+                    <td>{{ row[4] if row[4] is not none else '—' }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% endblock %}

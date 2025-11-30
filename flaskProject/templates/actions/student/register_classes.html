@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+
+{% block title %}Register For Class{% endblock %}
+
+{% block content %}
+
+<body>
+    <center>
+	<div class="register">
+		<div class="links">
+			<a href="{{ url_for('home') }}">Back</a>
+		</div>
+		<form action="{{ url_for('register_classes') }}" method="post" autocomplete="off">
+			<input type="text" name="coursename" placeholder="Course Name" id="coursename">
+
+			<input type="text" name="courseid" placeholder="Course Id" id="courseid">
+
+			<input type="text" name="section" placeholder="Section No. (ex: 001)" id="section" required>
+			<input type="text" name="year" placeholder="e.g: 2026" id="year" required>
+			<input type="text" name="semester" placeholder="Spring" id="semester" required>
+
+			<div class="msg">{{ msg }}</div>
+			<input type="submit" value="Register">
+		</form>
+	</div>
+    </center>
+</body>
+
+{% endblock %}

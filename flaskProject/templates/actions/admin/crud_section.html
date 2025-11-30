@@ -1,0 +1,126 @@
+{% extends 'layout.html' %}
+
+{% block title %}CRUD Section{% endblock %}
+
+{% block content %}
+<div class="msg">{{ msg }}</div>
+
+<div class="accordion" id="accordionExample">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+                aria-expanded="true" aria-controls="collapseOne">
+                Create
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_section') }}" method="POST">
+                    <div class="mb-3">
+                        <label>Section ID</label>
+                        <input type="text" name="Cid" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Section Code</label>
+                        <input type="text" name="Ccode" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Semester</label>
+                        <input type="text" name="Csem" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Year</label>
+                        <input type="text" name="Cyear" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Course ID</label>
+                        <input type="text" name="CcourseID" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Classroom ID</label>
+                        <input type="text" name="Croom" required>
+                    </div>
+
+                    <input type="submit" value="Create Section">
+
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                Read
+            </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_section') }}" method="POST">
+                    <div class="form-group">
+                        <label for="sections">Choose a Section:</label>
+                        <select name="section" id="section">
+                            {% for section in data %}
+                            <option value="{{ section }}">{{ section }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                Update
+            </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_section') }}" method="POST">
+                    <div class="form-group">
+                        <label for="sections">Choose a Section:</label>
+                        <select name="section" id="section">
+                            {% for section in data %}
+                            <option value="{{ section }}">{{ section }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingFour">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                Delete
+            </button>
+        </h2>
+        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_section') }}" method="POST">
+                    <div class="form-group">
+                        <label for="sections">Choose a Section:</label>
+                        <select name="section" id="section">
+                            {% for section in data %}
+                            <option value="{{ section }}">{{ section }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

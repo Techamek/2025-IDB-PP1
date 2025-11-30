@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block title %}Add Advisees{% endblock %}
+
+{% block content %}
+<h1>Add Students as Advisees</h1>
+
+{% if msg %}
+    <div class="alert alert-info">{{ msg }}</div>
+{% endif %}
+
+<div class="card p-4">
+    <p>
+        Enter a <strong>Student ID</strong> to assign that student to you as their advisor.
+        If the student already has an advisor, this will <strong>replace</strong> the previous one.
+    </p>
+
+    <form action="{{ url_for('add_advisor') }}" method="POST">
+        <div class="mb-3">
+            <label class="form-label">Student ID (e.g., S2001)</label>
+            <input type="text" name="student_id" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add as Advisee</button>
+    </form>
+</div>
+
+{% endblock %}
