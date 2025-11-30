@@ -471,14 +471,22 @@ def modify_info_stud():
         cursor = db.cursor()
         sql = "SELECT dept_name as dept_name from department;"
         cursor.execute(sql)
-        data = cursor.fetchall()        
-        cursor.close()
+        data = cursor.fetchall()    
         edited = []
 
         for i in data:
             edited.append(i[0])
 
-        return render_template('actions/student/modify_info.html', data = edited, msg=msg)
+        sql = "SELECT major_name from major;"
+        cursor.execute(sql)
+        data2 = cursor.fetchall()      
+        edited2 = []
+        cursor.close()
+
+        for i in data2:
+            edited2.append(i[0])
+
+        return render_template('actions/student/modify_info.html', data = edited, data2=edited2, msg=msg)
     if 'loggedin' not in session:
         return redirect(url_for('login'))
 
@@ -510,7 +518,30 @@ def modify_info_stud():
                 cursor.execute(f"UPDATE student SET {set_clause} WHERE student_id = %s", values)
 
             # -----------------------------
-            # 2. Update accounts table
+            # 2. Update declared table
+            # -----------------------------
+            new_major_name = request.form.get('major')
+
+            if new_major_name:
+                # Get the major id from name
+                cursor.execute("SELECT major_id FROM major WHERE major_name = %s", [new_major_name])
+                result = cursor.fetchone()
+
+                if result:
+                    major_id = result[0]
+
+                    # Update declared major
+                    cursor.execute("""
+                        UPDATE declared
+                        SET major_id = %s
+                        WHERE student_id = %s
+                    """, [major_id, student_id])
+
+                else:
+                    return "Error: Major not found", 400
+
+            # -----------------------------
+            # 3. Update accounts table
             # -----------------------------
             account_data = {
                 'username': request.form.get('username'),
@@ -545,12 +576,20 @@ def modify_info_stud():
     sql = "SELECT dept_name as dept_name from department;"
     cursor.execute(sql)
     data = cursor.fetchall()        
-    cursor.close()
     edited = []
 
     for i in data:
         edited.append(i[0])
-    return render_template("actions/student/modify_info.html", data=edited, msg=msg)
+
+    sql = "SELECT major_name from major;"
+    cursor.execute(sql)
+    data2 = cursor.fetchall()      
+    edited2 = []
+    cursor.close()
+
+    for i in data2:
+        edited2.append(i[0])
+    return render_template("actions/student/modify_info.html", data=edited, data2=edited2, msg=msg)
 
 ##########################################
 #  INSTRUCTOR STUFF
