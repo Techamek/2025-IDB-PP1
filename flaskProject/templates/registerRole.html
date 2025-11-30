@@ -13,23 +13,9 @@
 		<h1>Register</h1>
 		<div class="links">
 			<a href="{{ url_for('login') }}">Login</a>
-			<a href="{{ url_for('register') }}" class="active">Register</a>
+			<a href="{{ url_for('registerRole') }}" class="active">Register</a>
 		</div>
 		<form action="{{ url_for('register') }}" method="post" autocomplete="off">
-			<label for="username">
-				<i class="fas fa-user"></i>
-			</label>
-			<input type="text" name="username" placeholder="Username" id="username" required>
-
-			<label for="password">
-				<i class="fas fa-lock"></i>
-			</label>
-			<input type="password" name="password" placeholder="Password" id="password" required>
-
-			<label for="email">
-				<i class="fas fa-envelope"></i>
-			</label>
-			<input type="email" name="email" placeholder="Email" id="email" required>
 
 			<label for="role">
 				<i class="fas fa-user"></i>
@@ -41,14 +27,8 @@
 				<option value="Student">Student</option>
 			</select>
 
-			<label for="id">
-				<i class="fas fa-user"></i>
-			</label>
-			<input type="text" name="id" placeholder="Student or Instructor ID" id="id" required>
-
-
 			<div class="msg">{{ msg }}</div>
-			<input type="submit" value="Register">
+			<input type="submit" value="Continue">
 		</form>
 	</div>
 </body>
