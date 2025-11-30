@@ -3,7 +3,7 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<h2>Available Actions</h2>
+<h2>Actions for {{ role }}</h2>
 
 {% if role == "Administrator" %}
     <button onclick="location.href='/crud_course'">CRUD Course</button><br>
