@@ -380,7 +380,7 @@ def register_classes():
         courses=courses
     )
 
-#helper for register classes
+#helper for register_classes
 @app.route('/get_sections/<course_id>')
 def get_sections(course_id):
     cursor = db.cursor()
@@ -466,7 +466,6 @@ def check_final_grade():
         name=name
     )
 
-
 @app.route('/check_courses', methods=['GET'])
 def check_courses():
     if 'loggedin' not in session or session.get('role') != "Student":
@@ -528,8 +527,63 @@ def check_courses():
     )
 
 @app.route('/section_info', methods=['GET', 'POST'])
+def section_info():
+    if 'loggedin' not in session or session.get('role') != "Student":
+        return redirect(url_for('login'))
+
+    student_id = session['student_id']
+    cursor = db.cursor()
+    cursor.execute("""
+        SELECT
+            c.title,
+            s.sec_code,
+            s.semester,
+            s.year,
+            CONCAT(i.first_name, ' ', i.last_name) AS instructor,
+            CONCAT(cl.building, ' ', cl.room_number) AS classroom,
+            CONCAT(ts.day, ' ', LPAD(ts.start_hr,2,'0'), ':', LPAD(ts.start_min,2,'0'),
+                   '-', LPAD(ts.end_hr,2,'0'), ':', LPAD(ts.end_min,2,'0')) AS time_slot
+        FROM enrolled e
+        JOIN enrollment en ON en.enrollment_id = e.enrollment_id
+        JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+        JOIN section s ON s.section_id = io.section_id
+        JOIN has_sections hs ON hs.section_id = s.section_id
+        JOIN course c ON c.course_id = hs.course_id
+        LEFT JOIN teaches t ON t.section_id = s.section_id
+        LEFT JOIN instructor i ON i.instructor_id = t.instructor_id
+        LEFT JOIN held_in hi ON hi.section_id = s.section_id
+        LEFT JOIN classroom cl ON cl.room_id = hi.room_id
+        LEFT JOIN held_during hd ON hd.section_id = s.section_id
+        LEFT JOIN time_slot ts ON ts.time_slot_id = hd.time_slot_id
+        WHERE e.student_id = %s
+        ORDER BY s.year DESC, s.semester ASC, s.sec_code
+    """, (student_id,))
+    data = cursor.fetchall()
+    cursor.close()
+
+    return render_template('/actions/student/section_info.html', data=data)
 
 @app.route('/advisor_info', methods=['GET', 'POST'])
+def advisor_info():
+    if 'loggedin' not in session or session.get('role') != "Student":
+        return redirect(url_for('login'))
+
+    student_id = session['student_id']
+    cursor = db.cursor()
+    cursor.execute("""
+        SELECT
+            CONCAT(i.first_name, ' ', i.last_name) AS advisor_name,
+            d.dept_name
+        FROM advisor a
+        JOIN instructor i ON i.instructor_id = a.instructor_id
+        JOIN employed e ON e.instructor_id = i.instructor_id
+        JOIN department d ON d.dept_id = e.dept_id
+        WHERE a.student_id = %s
+    """, (student_id,))
+    advisors = cursor.fetchall()
+    cursor.close()
+
+    return render_template('/actions/student/advisor_info.html', advisors=advisors)
 
 @app.route('/modify_info_stud', methods=['POST', 'GET'])
 def modify_info_stud():
