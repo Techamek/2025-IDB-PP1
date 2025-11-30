@@ -26,12 +26,21 @@
 
             <input type="text" placeholder="Enrollment Year" name="year">
 
-            <label for="depts">Choose a Department: </label>
+            <label for="depts">Department: </label>
 			<select name="dept" id="dept">
 				{% for dept in data %}
 				<option value="{{ dept }}">{{ dept }}</option>
 				{% endfor %}
 			</select>
+
+            <div class="mb-3">
+                <label for="majors">Major:</label>
+                <select name="major" id="major">
+                    {% for major in data2 %}
+                    <option value="{{ major }}">{{ major }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
             <h2>Change Account Info:</h2>
 
