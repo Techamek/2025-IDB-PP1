@@ -491,19 +491,28 @@ def check_courses():
 
     # Query for student schedule with course title and grade
     query = """
-        SELECT 
-            c.course_id,
-            c.title,
-            s.year,
-            s.semester,
-            en.grade
-        FROM enrolled e
-        JOIN enrollment en ON e.enrollment_id = en.enrollment_id
-        JOIN is_offered io ON io.enrollment_id = en.enrollment_id
-        JOIN section s ON s.section_id = io.section_id
-        JOIN has_sections hs ON hs.section_id = s.section_id
-        JOIN course c ON c.course_id = hs.course_id
-        WHERE e.student_id = %s
+    SELECT 
+        c.course_id,
+        c.title,
+        s.year,
+        s.semester,
+        CASE
+            WHEN s.year < 2025 THEN
+                CASE
+                    WHEN en.grade IN ('A','B','C') THEN 'passed'
+                    WHEN en.grade IN ('D','F') THEN 'failed'
+                    ELSE 'unknown'
+                END
+            WHEN s.year = 2025 AND s.semester = 'Fall' THEN 'taking'
+            ELSE 'registered'
+        END AS status
+    FROM enrolled e
+    JOIN enrollment en ON e.enrollment_id = en.enrollment_id
+    JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+    JOIN section s ON s.section_id = io.section_id
+    JOIN has_sections hs ON hs.section_id = s.section_id
+    JOIN course c ON c.course_id = hs.course_id
+    WHERE e.student_id = %s
     """
     params = [student_id]
 
@@ -1174,16 +1183,53 @@ def crud_student():
     msg=''
     if request.method == 'GET':
         cursor = db.cursor()
-        sql = "SELECT first_name, middle_name, last_name from student;"
+        sql = "SELECT student_id, first_name, middle_name, last_name from student;"
         cursor.execute(sql)
         data = cursor.fetchall()
-        edited = []
+        
+        sql = """
+        SELECT 
+            s.student_id, 
+            s.first_name, 
+            s.middle_name, 
+            s.last_name, 
+            s.enrollment_year, 
+            s.total_credits, 
+            m.major_name, 
+            d.dept_name
+        FROM student s
+        LEFT JOIN declared dc ON dc.student_id = s.student_id
+        LEFT JOIN major m ON m.major_id = dc.major_id
+        LEFT JOIN under u ON u.major_id = m.major_id
+        LEFT JOIN department d ON d.dept_id = u.dept_id
+        """
+        cursor.execute(sql)
+        data2 = cursor.fetchall()  
+        edited2 = []
 
-        for fname, mname, lname in data:
-            edited.append(f"{lname}, {fname} {mname}")
+        for row in data2:
+            sid, fname, mname, lname, enyear, tcreds, major, dept = row
+            full_name = f"{lname}, {fname} {mname}"
+            edited2.append([sid, full_name, enyear, tcreds, major or "N/A", dept or "N/A"])
+
+        sql = "SELECT dept_name as dept_name from department;"
+        cursor.execute(sql)
+        data3 = cursor.fetchall()        
+        edited3 = []
+
+        for i in data3:
+            edited3.append(i[0])
+
+        sql = "SELECT major_name from major;"
+        cursor.execute(sql)
+        data4 = cursor.fetchall()      
+        edited4 = []
         cursor.close()
 
-        return render_template('actions/admin/crud_student.html', data = edited, msg=msg)
+        for i in data4:
+            edited4.append(i[0])
+
+        return render_template('actions/admin/crud_student.html', data = data, data2=edited2, data3=edited3, data4=edited4, msg=msg)
     if request.method == "POST"  and 'Cid' in request.form: #we creating out here
         id = request.form['Cid']
         fname = request.form['Cfname']
@@ -1219,18 +1265,159 @@ def crud_student():
             msg = 'Student Created!'
             db.commit()
             cursor.close()
+    elif request.method == 'POST' and 'update' in request.form:
+        student_id = request.form.get('student')
+        account_id = session['id']  # from login session
+
+        cursor = db.cursor()
+
+        try:
+            # -----------------------------
+            # 1. Update student table
+            # -----------------------------
+            student_data = {
+                'first_name': request.form.get('fname'),
+                'middle_name': request.form.get('mname'),
+                'last_name': request.form.get('lname'),
+                'total_credits': request.form.get('creds'),
+                'enrollment_year': request.form.get('year'),
+                'dept_name': request.form.get('dept')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in student_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(student_id)
+                cursor.execute(f"UPDATE student SET {set_clause} WHERE student_id = %s", values)
+
+            # -----------------------------
+            # 2. Update declared table
+            # -----------------------------
+            new_major_name = request.form.get('major')
+
+            if new_major_name:
+                # Get the major id from name
+                cursor.execute("SELECT major_id FROM major WHERE major_name = %s", [new_major_name])
+                result = cursor.fetchone()
+
+                if result:
+                    major_id = result[0]
+
+                    # Update declared major
+                    cursor.execute("""
+                        UPDATE declared
+                        SET major_id = %s
+                        WHERE student_id = %s
+                    """, [major_id, student_id])
+
+                else:
+                    return "Error: Major not found", 400
+
+            # -----------------------------
+            # 3. Update accounts table
+            # -----------------------------
+            account_data = {
+                'username': request.form.get('username'),
+                'password': request.form.get('password'),
+                'email': request.form.get('email')
+            }
+
+            # Hash password if provided
+            if account_data['password']:
+                account_data['password'] = generate_password_hash(account_data['password'])
+
+            # Filter out empty fields
+            update_fields = {k: v for k, v in account_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(account_id)
+                cursor.execute(f"UPDATE accounts SET {set_clause} WHERE id = %s", values)
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+    elif request.method == "POST" and 'delete' in request.form:
+        student_id = request.form.get('student')
+        cursor = db.cursor()
+        try:
+            #delete from declared table
+            cursor.execute("DELETE FROM declared WHERE student_id = %s", (student_id,))
+
+            #delete from advisor table
+            cursor.execute("DELETE FROM advisor WHERE student_id = %s", (student_id,))
+
+            #delete from enrolled table
+            cursor.execute("DELETE FROM enrolled WHERE student_id = %s", (student_id,))
+
+            #delete from student table
+            cursor.execute("DELETE FROM student WHERE student_id = %s", (student_id,))
+
+            db.commit()
+            msg = "Student deleted successfully!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error deleting student: {e}"
+
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
-    sql = "SELECT first_name, middle_name, last_name from student;"
+    sql = "SELECT student_id, first_name, middle_name, last_name from student;"
     cursor.execute(sql)
-    data = cursor.fetchall()        
-    cursor.close()
-    edited = []
+    data = cursor.fetchall()
 
-    for fname, mname, lname in data:
-            edited.append(f"{lname}, {fname} {mname}")
-    return render_template("actions/admin/crud_student.html",data=edited, msg=msg)
+    sql = """
+        SELECT 
+            s.student_id, 
+            s.first_name, 
+            s.middle_name, 
+            s.last_name, 
+            s.enrollment_year, 
+            s.total_credits, 
+            m.major_name, 
+            d.dept_name
+        FROM student s
+        LEFT JOIN declared dc ON dc.student_id = s.student_id
+        LEFT JOIN major m ON m.major_id = dc.major_id
+        LEFT JOIN under u ON u.major_id = m.major_id
+        LEFT JOIN department d ON d.dept_id = u.dept_id
+    """
+    cursor.execute(sql)
+    data2 = cursor.fetchall()  
+    edited2 = []
+
+    for row in data2:
+        sid, fname, mname, lname, enyear, tcreds, major, dept = row
+        full_name = f"{lname}, {fname} {mname}"
+        edited2.append([sid, full_name, enyear, tcreds, major or "N/A", dept or "N/A"])
+
+    sql = "SELECT dept_name as dept_name from department;"
+    cursor.execute(sql)
+    data3 = cursor.fetchall()        
+    edited3 = []
+
+    for i in data3:
+        edited3.append(i[0])
+
+    sql = "SELECT major_name from major;"
+    cursor.execute(sql)
+    data4 = cursor.fetchall()      
+    edited4 = []
+    cursor.close()
+
+    for i in data4:
+        edited4.append(i[0])
+    return render_template("actions/admin/crud_student.html",data=data, data2=edited2, data3=edited3, data4=edited4, msg=msg)
 
 @app.route('/assign_teacher', methods=['POST', 'GET'])
 
