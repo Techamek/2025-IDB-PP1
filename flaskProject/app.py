@@ -58,9 +58,9 @@ def login():
 
                 if student:
                     session['student_id'] = student[0]
-                    session['first_name'] = student[1]
-                    session['middle_name'] = student[2]
-                    session['last_name'] = student[3]
+                    session['fname'] = student[1]
+                    session['mname'] = student[2]
+                    session['lname'] = student[3]
                     session['year'] = student[4]
                     session['credits'] = student[5]
 
@@ -76,9 +76,9 @@ def login():
 
                 if instructor:
                     session['instructor_id'] = instructor[0]
-                    session['first_name'] = instructor[1]
-                    session['middle_name'] = instructor[2]
-                    session['last_name'] = instructor[3]
+                    session['fname'] = instructor[1]
+                    session['mname'] = instructor[2]
+                    session['lname'] = instructor[3]
                     session['salary'] = instructor[4]
 
             cursor.close()
@@ -273,9 +273,290 @@ def profile():
         return render_template('profile.html', account=account)
     return redirect(url_for('login'))
 
-@app.route('/register_classes', methods=['POST', 'GET'])
+##########################################
+#  STUDENT STUFF
+##########################################
+
+@app.route('/modify_info_stud', methods=['POST', 'GET'])
+def modify_info_stud():
+    msg = ''
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        student_id = session['student_id']
+        account_id = session['id']  # from login session
+
+        cursor = db.cursor()
+
+        try:
+            # -----------------------------
+            # 1. Update student table
+            # -----------------------------
+            student_data = {
+                'first_name': request.form.get('fname'),
+                'middle_name': request.form.get('mname'),
+                'last_name': request.form.get('lname'),
+                'total_credits': request.form.get('creds'),
+                'enrollment_year': request.form.get('year')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in student_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(student_id)
+                cursor.execute(f"UPDATE student SET {set_clause} WHERE student_id = %s", values)
+
+            # -----------------------------
+            # 2. Update accounts table
+            # -----------------------------
+            account_data = {
+                'username': request.form.get('username'),
+                'password': request.form.get('password'),
+                'email': request.form.get('email')
+            }
+
+            # Hash password if provided
+            if account_data['password']:
+                account_data['password'] = generate_password_hash(account_data['password'])
+
+            # Filter out empty fields
+            update_fields = {k: v for k, v in account_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(account_id)
+                cursor.execute(f"UPDATE accounts SET {set_clause} WHERE id = %s", values)
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    return render_template("actions/student/modify_info.html", msg=msg)
+
+@app.route('/register_classes', methods=['GET', 'POST'])
 def register_classes():
-    return render_template("actions/student/register_classes.html")
+    if 'loggedin' not in session or session.get('role') != "Student":
+        return redirect(url_for('login'))
+
+    msg = ''
+
+    if request.method == 'POST':
+        coursename   = request.form['coursename']
+        courseid     = request.form['courseid']
+        section_code = request.form['section']
+        semester     = request.form['semester']
+        year         = request.form['year']
+        student_id   = session['student_id']
+
+        cursor = db.cursor()
+
+        try:
+            # -----------------------------------------
+            # STEP 1: Insert enrollment only if valid
+            # -----------------------------------------
+            cursor.execute("""
+                INSERT INTO enrollment (grade)
+                SELECT NULL
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM course c
+                    JOIN has_sections hs ON hs.course_id = c.course_id
+                    JOIN section s ON s.section_id = hs.section_id
+                    WHERE (c.course_id = %s OR c.title = %s)
+                      AND s.sec_code = %s
+                      AND s.semester = %s
+                      AND s.year = %s
+                );
+            """, (courseid, coursename, section_code, semester, year))
+
+            if cursor.rowcount == 0:
+                msg = "Invalid course/section or not offered in that term."
+                return render_template('/actions/student/register_classes.html', msg=msg)
+
+            enrollment_id = cursor.lastrowid
+
+            # -----------------------------------------
+            # STEP 2: Link enrollment → section
+            # -----------------------------------------
+            cursor.execute("""
+                INSERT INTO is_offered (section_id, enrollment_id)
+                SELECT s.section_id, %s
+                FROM course c
+                JOIN has_sections hs ON hs.course_id = c.course_id
+                JOIN section s ON s.section_id = hs.section_id
+                WHERE (c.course_id = %s OR c.title = %s)
+                  AND s.sec_code = %s
+                  AND s.semester = %s
+                  AND s.year = %s
+            """, (enrollment_id, courseid, coursename, section_code, semester, year))
+
+            if cursor.rowcount == 0:
+                msg = "Unexpected error: no section matched."
+                db.rollback()
+                return render_template('/actions/student/register_classes.html', msg=msg)
+
+            # -----------------------------------------
+            # STEP 3: Link enrollment → student
+            # -----------------------------------------
+            cursor.execute("""
+                INSERT INTO enrolled (student_id, enrollment_id)
+                VALUES (%s, %s)
+            """, (student_id, enrollment_id))
+
+            db.commit()
+            msg = "Successfully enrolled!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Database error: {str(e)}"
+
+        finally:
+            cursor.close()
+
+        return render_template('/actions/student/register_classes.html', msg=msg)
+
+    # GET request → show form
+    return render_template('/actions/student/register_classes.html', msg=msg)
+
+@app.route('/check_courses', methods=['GET'])
+def check_courses():
+    if 'loggedin' not in session or session.get('role') != "Student":
+        return redirect(url_for('login'))
+
+    student_id = session['student_id']
+    name = f"{session['fname']} {session['lname']}"
+    selected_year = request.args.get('year')
+
+    cursor = db.cursor()
+
+    # Get all years the student has courses in (for the dropdown)
+    cursor.execute("""
+        SELECT DISTINCT s.year
+        FROM enrolled e
+        JOIN enrollment en ON e.enrollment_id = en.enrollment_id
+        JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+        JOIN section s ON s.section_id = io.section_id
+        WHERE e.student_id = %s
+        ORDER BY s.year DESC
+    """, (student_id,))
+    years = [row[0] for row in cursor.fetchall()]
+
+    # Query for student schedule with course title and grade
+    query = """
+        SELECT 
+            c.course_id,
+            c.title,
+            s.semester,
+            s.year,
+            en.grade
+        FROM enrolled e
+        JOIN enrollment en ON e.enrollment_id = en.enrollment_id
+        JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+        JOIN section s ON s.section_id = io.section_id
+        JOIN has_sections hs ON hs.section_id = s.section_id
+        JOIN course c ON c.course_id = hs.course_id
+        WHERE e.student_id = %s
+    """
+    params = [student_id]
+
+    if selected_year:
+        query += " AND s.year = %s"
+        params.append(selected_year)
+
+    query += " ORDER BY s.year DESC, s.semester"
+
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+
+    cursor.close()
+
+    return render_template(
+        '/actions/student/check_courses.html',
+        data=data,
+        years=years,
+        student_id=student_id,
+        name=name
+    )
+
+##########################################
+#  INSTRUCTOR STUFF
+##########################################
+
+@app.route('/modify_info_inst', methods=['POST', 'GET'])
+def modify_info_inst():
+    msg = ''
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        instructor_id = session['instructor_id']
+        account_id = session['id']  # from login session
+
+        cursor = db.cursor()
+
+        try:
+            # -----------------------------
+            # 1. Update instructor table
+            # -----------------------------
+            instructor_data = {
+                'first_name': request.form.get('fname'),
+                'middle_name': request.form.get('mname'),
+                'last_name': request.form.get('lname'),
+                'salary': request.form.get('salary')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in instructor_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(instructor_id)
+                cursor.execute(f"UPDATE instructor SET {set_clause} WHERE instructor_id = %s", values)
+
+            # -----------------------------
+            # 2. Update accounts table
+            # -----------------------------
+            account_data = {
+                'username': request.form.get('username'),
+                'password': request.form.get('password'),
+                'email': request.form.get('email')
+            }
+
+            # Hash password if provided
+            if account_data['password']:
+                account_data['password'] = generate_password_hash(account_data['password'])
+
+            # Filter out empty fields
+            update_fields = {k: v for k, v in account_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(account_id)
+                cursor.execute(f"UPDATE accounts SET {set_clause} WHERE id = %s", values)
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    return render_template("actions/instructor/modify_info.html", msg=msg)
+
 
 # Search form route
 @app.route('/searchform')
