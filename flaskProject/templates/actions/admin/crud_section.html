@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 
-{% block title %}CRUD Course{% endblock %}
+{% block title %}CRUD Section{% endblock %}
 
 {% block content %}
 <div class="msg">{{ msg }}</div>
@@ -16,23 +16,28 @@
         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
-                <form action="{{ url_for('crud_course') }}" method="POST">
+                <form action="{{ url_for('crud_section') }}" method="POST">
                     <div class="mb-3">
-                        <label>Course ID</label>
+                        <label>Section ID</label>
                         <input type="text" name="Cid" required>
                     </div>
 
                     <div class="mb-3">
-                        <label>Title</label>
-                        <input type="text" name="Ctitle" required>
+                        <label>Section Code</label>
+                        <input type="text" name="Ccode" required>
                     </div>
 
                     <div class="mb-3">
-                        <label>Credits</label>
-                        <input type="text" name="Ccredits" required>
+                        <label>Semester</label>
+                        <input type="text" name="Csem" required>
                     </div>
 
-                    <input type="submit" value="Create Course">
+                    <div class="mb-3">
+                        <label>Year</label>
+                        <input type="text" name="Cyear" required>
+                    </div>
+
+                    <input type="submit" value="Create Section">
 
                 </form>
             </div>
@@ -48,12 +53,12 @@
         <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
-                <form action="{{ url_for('crud_course') }}" method="POST">
+                <form action="{{ url_for('crud_section') }}" method="POST">
                     <div class="form-group">
-                        <label for="courses">Choose a Course:</label>
-                        <select name="course" id="course">
-                            {% for course in data %}
-                            <option value="{{ course }}">{{ course }}</option>
+                        <label for="sections">Choose a Section:</label>
+                        <select name="section" id="section">
+                            {% for section in data %}
+                            <option value="{{ section }}">{{ section }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -71,12 +76,12 @@
         <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
-                <form action="{{ url_for('crud_course') }}" method="POST">
+                <form action="{{ url_for('crud_section') }}" method="POST">
                     <div class="form-group">
-                        <label for="courses">Choose a Course:</label>
-                        <select name="course" id="course">
-                            {% for course in data %}
-                            <option value="{{ course }}">{{ course }}</option>
+                        <label for="sections">Choose a Section:</label>
+                        <select name="section" id="section">
+                            {% for section in data %}
+                            <option value="{{ section }}">{{ section }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -94,12 +99,12 @@
         <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour"
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
-                <form action="{{ url_for('crud_course') }}" method="POST">
+                <form action="{{ url_for('crud_section') }}" method="POST">
                     <div class="form-group">
-                        <label for="courses">Choose a Course:</label>
-                        <select name="course" id="course">
-                            {% for course in data %}
-                            <option value="{{ course }}">{{ course }}</option>
+                        <label for="sections">Choose a Section:</label>
+                        <select name="section" id="section">
+                            {% for section in data %}
+                            <option value="{{ section }}">{{ section }}</option>
                             {% endfor %}
                         </select>
                     </div>
