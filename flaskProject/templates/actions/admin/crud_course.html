@@ -9,7 +9,7 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
-                aria-expanded="true" aria-controls="collapseOne" onclick="submitAction('create')">
+                aria-expanded="true" aria-controls="collapseOne">
                 Create
             </button>
         </h2>
@@ -30,6 +30,16 @@
                     <div class="mb-3">
                         <label>Credits</label>
                         <input type="text" name="Ccredits" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Prerequisite Course ID</label>
+                        <input type="text" name="Cprereq" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Department ID</label>
+                        <input type="text" name="Cdept" required>
                     </div>
 
                     <input type="submit" value="Create Course">
