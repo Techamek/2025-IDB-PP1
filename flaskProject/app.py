@@ -685,6 +685,8 @@ def crud_course():
         id = request.form['Cid']
         title = request.form['Ctitle']
         credits = request.form['Ccredits']
+        prereq = request.form['Cprereq']
+        dept = request.form['Cdept']
         cursor = db.cursor()
         sql = "SELECT * FROM course WHERE title = %s;"
         cursor.execute(sql, [title])
@@ -699,6 +701,10 @@ def crud_course():
             cursor = db.cursor()
             sql = "insert into course values (%s, %s, %s)"
             cursor.execute(sql, [id, title, credits])
+            sql = 'insert into prereq values (%s, %s)'
+            cursor.execute(sql, [id, prereq])
+            sql = 'insert into has_course values (%s, %s)'
+            cursor.execute(sql, [dept, id])
             data = cursor.fetchall()
             print(data)
             msg = 'Course Created!'
@@ -745,6 +751,7 @@ def crud_section():
         semester = request.form['Csem']
         year = request.form['Cyear']
         course = request.form['CcourseID']
+        room = request.form['Croom']
         cursor = db.cursor()
         sql ="""
         SELECT s.section_id
@@ -771,6 +778,8 @@ def crud_section():
             print(data)
             sql = "insert into has_sections values (%s, %s)"
             cursor.execute(sql, [id, course])
+            sql = "insert into held_in values (%s, %s)"
+            cursor.execute(sql, [id, room])
             msg = 'Section Created!'
             db.commit()
             cursor.close()
@@ -877,7 +886,7 @@ def crud_department():
         print(dept)
         cursor.close()
         if dept:
-            msg = 'Account already exists!'
+            msg = 'Department already exists!'
         else:
             # Hash the password before storing it
             print("creating department")
@@ -940,7 +949,7 @@ def crud_timeslot():
         print(result)
         cursor.close()
         if result:
-            msg = 'Account already exists!'
+            msg = 'Time slot already exists!'
         else:
             # Hash the password before storing it
             print("creating time slot")
@@ -1005,7 +1014,7 @@ def crud_instructor():
         print(result)
         cursor.close()
         if result:
-            msg = 'Account already exists!'
+            msg = 'Instructor already exists!'
         else:
             # Hash the password before storing it
             print("creating instructor")
@@ -1037,12 +1046,75 @@ def crud_instructor():
             edited.append(f"{lname}, {fname} {mname}")
     return render_template("actions/admin/crud_instructor.html",data=edited, msg=msg)
 
-
 @app.route('/crud_student', methods=['POST', 'GET'])
+def crud_student():
+    edited=''
+    msg=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT first_name, middle_name, last_name from student;"
+        cursor.execute(sql)
+        data = cursor.fetchall()
+        edited = []
+
+        for fname, mname, lname in data:
+            edited.append(f"{lname}, {fname} {mname}")
+        cursor.close()
+
+        return render_template('actions/admin/crud_student.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'Cid' in request.form: #we creating out here
+        id = request.form['Cid']
+        fname = request.form['Cfname']
+        mname = request.form['Cmname']
+        lname = request.form['Clname']
+        year = request.form['Cyear']
+        creds = request.form['Ccreds']
+        major = request.form['Cmajor']
+        dept = request.form['Cdept']
+        cursor = db.cursor()
+        sql = """
+        SELECT * FROM student WHERE first_name = %s
+        AND middle_name = %s
+        AND last_name = %s;
+        """
+        cursor.execute(sql, [fname, mname, lname])
+        result = cursor.fetchall()
+        print(result)
+        cursor.close()
+        if result:
+            msg = 'Student already exists!'
+        else:
+            # Hash the password before storing it
+            print("creating student")
+            print(id, fname, mname, lname, year, creds, dept)            
+            cursor = db.cursor()
+            sql = "insert into student values (%s, %s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, [id, fname, mname, lname, year, creds, dept])
+            sql = "insert into declared values (%s, %s)"
+            cursor.execute(sql, [id, major])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'Student Created!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    cursor = db.cursor()
+    sql = "SELECT first_name, middle_name, last_name from student;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for fname, mname, lname in data:
+            edited.append(f"{lname}, {fname} {mname}")
+    return render_template("actions/admin/crud_student.html",data=edited, msg=msg)
+
 
 @app.route('/assign_teacher', methods=['POST', 'GET'])
 
 ######################################################
+
 # Search form route
 @app.route('/searchform')
 def searchform():
