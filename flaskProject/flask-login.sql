@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
     `password` VARCHAR(255) NOT NULL,
     `email` VARCHAR(100) NOT NULL,
     `role` VARCHAR(50) NOT NULL,
-    `user_ref` VARCHAR(50) NOT NULL,   -- NEW column referencing student/instructor ID
+    `user_ref` VARCHAR(50),   -- NEW column referencing student/instructor ID
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
