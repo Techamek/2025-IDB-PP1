@@ -24,6 +24,7 @@
     <button onclick="location.href='/remove_from_section'">Remove Student</button><br>
     <button onclick="location.href='/section_roster'">Check Section Roster</button><br>
     <button onclick="location.href='/teaching_sections'">Check Sections Teaching</button><br>
+    <button onclick="location.href='/modify_info_inst'">Modify Personal Info</button><br>
 
 {% elif role == "Student" %}
     <button onclick="location.href='/register_classes'">Register for Classes</button><br>
@@ -32,7 +33,7 @@
     <button onclick="location.href='/check_courses'">Check Courses by Semester</button><br>
     <button onclick="location.href='/section_info'">Check Section Info</button><br>
     <button onclick="location.href='/advisor_info'">Check Advisor Info</button><br>
-    <button onclick="location.href='/modify_info'">Modify Personal Info</button><br>
+    <button onclick="location.href='/modify_info_stud'">Modify Personal Info</button><br>
 {% endif %}
 
 {% endblock %}
