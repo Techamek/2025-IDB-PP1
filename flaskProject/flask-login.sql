@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS `accounts` (
-        `id` int(11) NOT NULL AUTO_INCREMENT,
-        `username` varchar(50) NOT NULL,
-        `password` varchar(255) NOT NULL,
-        `email` varchar(100) NOT NULL,
-        `role` varchar(15) NOT NULL,
+    `id` INT(11) NOT NULL AUTO_INCREMENT,
+    `username` VARCHAR(50) NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(100) NOT NULL,
+    `role` VARCHAR(50) NOT NULL,
+    `user_ref` VARCHAR(50) NOT NULL,   -- NEW column referencing student/instructor ID
     PRIMARY KEY (`id`)
-        ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
