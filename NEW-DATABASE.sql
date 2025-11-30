@@ -58,8 +58,7 @@ CREATE TABLE section (
     section_id   INT AUTO_INCREMENT PRIMARY KEY,
     sec_code     VARCHAR(5),
     semester     VARCHAR(10) CHECK (semester IN ('Spring','Summer','Fall','Winter')),
-    year         INT CHECK (year BETWEEN 2000 AND 2099),
-    UNIQUE (semester, year, sec_code)
+    year         INT CHECK (year BETWEEN 2000 AND 2099)
 );
 
 CREATE TABLE enrollment (
