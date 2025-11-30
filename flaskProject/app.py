@@ -1,5 +1,5 @@
 #! /usr/bin/python3
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 import config
@@ -324,84 +324,88 @@ def register_classes():
         return redirect(url_for('login'))
 
     msg = ''
+    cursor = db.cursor()
 
+    # -----------------------------
+    # POST: Student selects section
+    # -----------------------------
     if request.method == 'POST':
-        coursename   = request.form['coursename']
-        courseid     = request.form['courseid']
-        section_code = request.form['section']
-        semester     = request.form['semester']
-        year         = request.form['year']
-        student_id   = session['student_id']
+        section_id = request.form.get("enrollment_id")  # THIS IS A SECTION ID
+        student_id = session['student_id']
 
         cursor = db.cursor()
 
         try:
-            # -----------------------------------------
-            # STEP 1: Insert enrollment only if valid
-            # -----------------------------------------
-            cursor.execute("""
-                INSERT INTO enrollment (grade)
-                SELECT NULL
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM course c
-                    JOIN has_sections hs ON hs.course_id = c.course_id
-                    JOIN section s ON s.section_id = hs.section_id
-                    WHERE (c.course_id = %s OR c.title = %s)
-                      AND s.sec_code = %s
-                      AND s.semester = %s
-                      AND s.year = %s
-                );
-            """, (courseid, coursename, section_code, semester, year))
-
-            if cursor.rowcount == 0:
-                msg = "Invalid course/section or not offered in that term."
-                return render_template('/actions/student/register_classes.html', msg=msg)
-
+            #create a new enrollment
+            cursor.execute("INSERT INTO enrollment (grade) VALUES (NULL)")
             enrollment_id = cursor.lastrowid
 
-            # -----------------------------------------
-            # STEP 2: Link enrollment → section
-            # -----------------------------------------
-            cursor.execute("""
-                INSERT INTO is_offered (section_id, enrollment_id)
-                SELECT s.section_id, %s
-                FROM course c
-                JOIN has_sections hs ON hs.course_id = c.course_id
-                JOIN section s ON s.section_id = hs.section_id
-                WHERE (c.course_id = %s OR c.title = %s)
-                  AND s.sec_code = %s
-                  AND s.semester = %s
-                  AND s.year = %s
-            """, (enrollment_id, courseid, coursename, section_code, semester, year))
+            #link it to the section
+            cursor.execute(
+                "INSERT INTO is_offered (section_id, enrollment_id) VALUES (%s, %s)",
+                (section_id, enrollment_id)
+            )
 
-            if cursor.rowcount == 0:
-                msg = "Unexpected error: no section matched."
-                db.rollback()
-                return render_template('/actions/student/register_classes.html', msg=msg)
-
-            # -----------------------------------------
-            # STEP 3: Link enrollment → student
-            # -----------------------------------------
-            cursor.execute("""
-                INSERT INTO enrolled (student_id, enrollment_id)
-                VALUES (%s, %s)
-            """, (student_id, enrollment_id))
+            #link it to the student
+            cursor.execute(
+                "INSERT INTO enrolled (student_id, enrollment_id) VALUES (%s, %s)",
+                (student_id, enrollment_id)
+            )
 
             db.commit()
             msg = "Successfully enrolled!"
 
         except Exception as e:
             db.rollback()
-            msg = f"Database error: {str(e)}"
+            msg = f"Error enrolling: {e}"
 
-        finally:
-            cursor.close()
+    # -----------------------------
+    # GET: Load available courses
+    # -----------------------------
+    cursor.execute("""
+    SELECT DISTINCT c.course_id, c.title
+    FROM course c
+    JOIN has_sections hs ON hs.course_id = c.course_id
+    JOIN section s ON s.section_id = hs.section_id
+    JOIN is_offered io ON io.section_id = s.section_id
+    ORDER BY c.course_id
+    """)
 
-        return render_template('/actions/student/register_classes.html', msg=msg)
+    courses = cursor.fetchall()
+    cursor.close()
 
-    # GET request → show form
-    return render_template('/actions/student/register_classes.html', msg=msg)
+    return render_template(
+        '/actions/student/register_classes.html',
+        msg=msg,
+        courses=courses
+    )
+
+@app.route('/get_sections/<course_id>')
+def get_sections(course_id):
+    cursor = db.cursor()
+
+    cursor.execute("""
+        SELECT 
+            s.section_id,
+            s.sec_code,
+            s.semester,
+            s.year
+        FROM has_sections hs
+        JOIN section s ON s.section_id = hs.section_id
+        WHERE hs.course_id = %s
+        ORDER BY s.year DESC, s.semester ASC, s.sec_code
+    """, (course_id,))
+
+    rows = cursor.fetchall()
+    cursor.close()
+
+    data = []
+    for r in rows:
+        data.append([r[0], r[1], r[2], r[3]])
+
+    return jsonify(data)
+
+@app.route('/check_final_grade', methods=['GET', 'POST'])
 
 @app.route('/check_courses', methods=['GET'])
 def check_courses():
@@ -462,6 +466,10 @@ def check_courses():
         student_id=student_id,
         name=name
     )
+
+@app.route('/section_info', methods=['GET', 'POST'])
+
+@app.route('/advisor_info', methods=['GET', 'POST'])
 
 @app.route('/modify_info_stud', methods=['POST', 'GET'])
 def modify_info_stud():
@@ -1109,7 +1117,6 @@ def crud_student():
     for fname, mname, lname in data:
             edited.append(f"{lname}, {fname} {mname}")
     return render_template("actions/admin/crud_student.html",data=edited, msg=msg)
-
 
 @app.route('/assign_teacher', methods=['POST', 'GET'])
 
