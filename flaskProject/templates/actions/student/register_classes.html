@@ -1,29 +1,66 @@
 {% extends 'layout.html' %}
-
-{% block title %}Register For Class{% endblock %}
+{% block title %}Register Classes{% endblock %}
 
 {% block content %}
 
-<body>
-    <center>
-	<div class="register">
-		<div class="links">
-			<a href="{{ url_for('home') }}">Back</a>
-		</div>
-		<form action="{{ url_for('register_classes') }}" method="post" autocomplete="off">
-			<input type="text" name="coursename" placeholder="Course Name" id="coursename">
+<h3>Register for a Class</h3>
+<p>{{ msg }}</p>
 
-			<input type="text" name="courseid" placeholder="Course Id" id="courseid">
+<label>Choose Course:</label>
+<select id="course_select" class="form-control">
+    <option value="">-- Select Course --</option>
+    {% for c in courses %}
+        <option value="{{ c[0] }}">{{ c[0] }} — {{ c[1] }}</option>
+    {% endfor %}
+</select>
 
-			<input type="text" name="section" placeholder="Section No. (ex: 001)" id="section" required>
-			<input type="text" name="year" placeholder="e.g: 2026" id="year" required>
-			<input type="text" name="semester" placeholder="Spring" id="semester" required>
+<br>
 
-			<div class="msg">{{ msg }}</div>
-			<input type="submit" value="Register">
-		</form>
-	</div>
-    </center>
-</body>
+<label>Choose Section:</label>
+<select id="section_select" class="form-control">
+    <option value="">-- Select Section --</option>
+</select>
+
+<br>
+
+<form method="POST">
+    <input type="hidden" name="enrollment_id" id="enrollment_id">
+    <button type="submit" class="btn btn-primary">Register</button>
+</form>
+
+<script>
+const courseSelect = document.getElementById("course_select");
+const sectionSelect = document.getElementById("section_select");
+const hiddenInput = document.getElementById("enrollment_id");
+
+courseSelect.onchange = () => {
+    const courseId = courseSelect.value;
+
+    sectionSelect.innerHTML = `<option value="">-- Select Section --</option>`;
+
+    if (!courseId) return;
+
+    fetch(`/get_sections/${courseId}`)
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(sec => {
+                const section_id = sec[0];
+                const sec_code   = sec[1];
+                const semester   = sec[2];
+                const year       = sec[3];
+
+                sectionSelect.innerHTML += `
+                    <option value="${section_id}">
+                        ${sec_code} — ${semester} ${year}
+                    </option>
+                `;
+            });
+        });
+};
+
+sectionSelect.onchange = () => {
+    hiddenInput.value = sectionSelect.value;
+};
+</script>
 
 {% endblock %}
