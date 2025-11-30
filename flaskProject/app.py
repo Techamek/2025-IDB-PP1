@@ -139,8 +139,8 @@ def register_admin():
             print("creating account")
             print(username, hashed_password, email, role)            
             cursor = db.cursor()
-            sql = "insert into accounts values (%s, %s, %s, %s, %s)"  
-            cursor.execute(sql, [None, username, hashed_password, email, role])
+            sql = "insert into accounts values (%s, %s, %s, %s, %s, %s)"  
+            cursor.execute(sql, [None, username, hashed_password, email, role, None])
             data = cursor.fetchall()
             print(data)
             msg = 'You have successfully registered!'
@@ -300,95 +300,6 @@ def profile():
 #  STUDENT STUFF
 ##########################################
 
-@app.route('/modify_info_stud', methods=['POST', 'GET'])
-def modify_info_stud():
-    msg = ''
-    edited=''
-    if request.method == 'GET':
-        cursor = db.cursor()
-        sql = "SELECT dept_name as dept_name from department;"
-        cursor.execute(sql)
-        data = cursor.fetchall()        
-        cursor.close()
-        edited = []
-
-        for i in data:
-            edited.append(i[0])
-
-        return render_template('actions/student/modify_info.html', data = edited, msg=msg)
-    if 'loggedin' not in session:
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        student_id = session['student_id']
-        account_id = session['id']  # from login session
-
-        cursor = db.cursor()
-
-        try:
-            # -----------------------------
-            # 1. Update student table
-            # -----------------------------
-            student_data = {
-                'first_name': request.form.get('fname'),
-                'middle_name': request.form.get('mname'),
-                'last_name': request.form.get('lname'),
-                'total_credits': request.form.get('creds'),
-                'enrollment_year': request.form.get('year'),
-                'dept_name': request.form.get('dept')
-            }
-            # Filter out empty fields
-            update_fields = {k: v for k, v in student_data.items() if v not in (None, '')}
-
-            if update_fields:
-                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
-                values = list(update_fields.values())
-                values.append(student_id)
-                cursor.execute(f"UPDATE student SET {set_clause} WHERE student_id = %s", values)
-
-            # -----------------------------
-            # 2. Update accounts table
-            # -----------------------------
-            account_data = {
-                'username': request.form.get('username'),
-                'password': request.form.get('password'),
-                'email': request.form.get('email')
-            }
-
-            # Hash password if provided
-            if account_data['password']:
-                account_data['password'] = generate_password_hash(account_data['password'])
-
-            # Filter out empty fields
-            update_fields = {k: v for k, v in account_data.items() if v not in (None, '')}
-
-            if update_fields:
-                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
-                values = list(update_fields.values())
-                values.append(account_id)
-                cursor.execute(f"UPDATE accounts SET {set_clause} WHERE id = %s", values)
-
-            db.commit()
-            msg = "Info updated!"
-
-        except Exception as e:
-            db.rollback()
-            msg = f"Error updating info: {str(e)}"
-
-        finally:
-            cursor.close()
-
-    cursor = db.cursor()
-    sql = "SELECT dept_name as dept_name from department;"
-    cursor.execute(sql)
-    data = cursor.fetchall()        
-    cursor.close()
-    edited = []
-
-    for i in data:
-        edited.append(i[0])
-    return render_template("actions/student/modify_info.html", data=edited, msg=msg)
-
 @app.route('/register_classes', methods=['GET', 'POST'])
 def register_classes():
     if 'loggedin' not in session or session.get('role') != "Student":
@@ -534,6 +445,95 @@ def check_courses():
         name=name
     )
 
+@app.route('/modify_info_stud', methods=['POST', 'GET'])
+def modify_info_stud():
+    msg = ''
+    edited=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT dept_name as dept_name from department;"
+        cursor.execute(sql)
+        data = cursor.fetchall()        
+        cursor.close()
+        edited = []
+
+        for i in data:
+            edited.append(i[0])
+
+        return render_template('actions/student/modify_info.html', data = edited, msg=msg)
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        student_id = session['student_id']
+        account_id = session['id']  # from login session
+
+        cursor = db.cursor()
+
+        try:
+            # -----------------------------
+            # 1. Update student table
+            # -----------------------------
+            student_data = {
+                'first_name': request.form.get('fname'),
+                'middle_name': request.form.get('mname'),
+                'last_name': request.form.get('lname'),
+                'total_credits': request.form.get('creds'),
+                'enrollment_year': request.form.get('year'),
+                'dept_name': request.form.get('dept')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in student_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(student_id)
+                cursor.execute(f"UPDATE student SET {set_clause} WHERE student_id = %s", values)
+
+            # -----------------------------
+            # 2. Update accounts table
+            # -----------------------------
+            account_data = {
+                'username': request.form.get('username'),
+                'password': request.form.get('password'),
+                'email': request.form.get('email')
+            }
+
+            # Hash password if provided
+            if account_data['password']:
+                account_data['password'] = generate_password_hash(account_data['password'])
+
+            # Filter out empty fields
+            update_fields = {k: v for k, v in account_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(account_id)
+                cursor.execute(f"UPDATE accounts SET {set_clause} WHERE id = %s", values)
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    cursor = db.cursor()
+    sql = "SELECT dept_name as dept_name from department;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for i in data:
+        edited.append(i[0])
+    return render_template("actions/student/modify_info.html", data=edited, msg=msg)
+
 ##########################################
 #  INSTRUCTOR STUFF
 ##########################################
@@ -603,6 +603,63 @@ def modify_info_inst():
 
     return render_template("actions/instructor/modify_info.html", msg=msg)
 
+##########################################
+#  ADMIN STUFF
+##########################################
+
+@app.route('/crud_department', methods=['POST', 'GET'])
+def crud_department():
+    edited=''
+    msg=''
+    if request.method == 'GET':
+        cursor = db.cursor()
+        sql = "SELECT dept_name as dept_name from department;"
+        cursor.execute(sql)
+        data = cursor.fetchall()        
+        cursor.close()
+        edited = []
+
+        for i in data:
+            edited.append(i[0])
+
+        return render_template('actions/admin/crud_department.html', data = edited, msg=msg)
+    if request.method == "POST"  and 'Cid' in request.form: #we creating out here
+        id = request.form['Cid']
+        name = request.form['Cname']
+        building = request.form['Cbuilding']
+        budget = request.form['Cbudget']
+        cursor = db.cursor()
+        sql = "SELECT * FROM department WHERE dept_name = %s;"
+        cursor.execute(sql, [name])
+        dept = cursor.fetchall()
+        print(dept)
+        cursor.close()
+        if dept:
+            msg = 'Account already exists!'
+        else:
+            # Hash the password before storing it
+            print("creating department")
+            print(id, name, building, budget)            
+            cursor = db.cursor()
+            sql = "insert into department values (%s, %s, %s, %s)"
+            cursor.execute(sql, [id, name, building, budget])
+            data = cursor.fetchall()
+            print(data)
+            msg = 'Department Created!'
+            db.commit()
+            cursor.close()
+    elif request.method == 'POST':
+        msg = 'Please fill out the form!'
+    cursor = db.cursor()
+    sql = "SELECT dept_name as dept_name from department;"
+    cursor.execute(sql)
+    data = cursor.fetchall()        
+    cursor.close()
+    edited = []
+
+    for i in data:
+        edited.append(i[0])
+    return render_template("actions/admin/crud_department.html",data=edited, msg=msg)
 
 # Search form route
 @app.route('/searchform')
