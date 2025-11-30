@@ -1,0 +1,20 @@
+{% extends 'layout.html' %}
+{% block title %}My Advisor{% endblock %}
+
+{% block content %}
+<h3>My Advisor Information</h3>
+
+<table class="table table-hover">
+    <tr>
+        <th>Advisor Name</th>
+        <th>Department</th>
+    </tr>
+
+    {% for row in advisors %}
+    <tr>
+        <td>{{ row[0] }}</td> <!-- advisor name -->
+        <td>{{ row[1] }}</td> <!-- department -->
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
