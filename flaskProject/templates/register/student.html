@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+</head>
+
+<body>
+    <div class="register">
+        <h1>Register</h1>
+        <div class="links">
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('registerRole') }}" class="active">Register</a>
+        </div>
+        <center>
+            <h2>Student Registration</h2>
+            <div class="msg">{{ msg }}</div>
+        </center>
+        <form method="post" action="{{ url_for('register_student') }}">
+            <div class="mb-3">
+                <label>Student ID</label>
+                <input type="text" name="id" required>
+            </div>
+            <div class="mb-3">
+                <label>First Name</label>
+                <input type="text" name="fname" required>
+            </div>
+            <div class="mb-3">
+                <label>Middle Name</label>
+                <input type="text" name="mname" required>
+            </div>
+            <div class="mb-3">
+                <label>Last Name</label>
+                <input type="text" name="lname" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="majors">Major</label>
+                <select name="major" id="major">
+                    {% for major in data2 %}
+                    <option value="{{ major }}">{{ major }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label>Enrollment Year</label>
+                <input type="text" name="year" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Total Credits</label>
+                <input type="text" name="creds" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="depts">Choose a Department:</label>
+                <select name="dept" id="dept">
+                    {% for dept in data %}
+                    <option value="{{ dept }}">{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label>Username</label>
+                <input type="text" name="username" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+            <input type="submit" value="Register">
+
+        </form>
+
+    </div>
+</body>
+
+</html>

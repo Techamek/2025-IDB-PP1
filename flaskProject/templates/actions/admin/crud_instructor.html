@@ -1,0 +1,197 @@
+{% extends 'layout.html' %}
+{% block title %}CRUD Instructor{% endblock %}
+
+{% block content %}
+
+<h2>CRUD Instructor</h2>
+<div class="msg">{{ msg }}</div>
+
+<div class="accordion" id="instructorAccordion">
+
+    <!-- CREATE (EXACTLY FROM OLD) -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingCreate">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseCreate">
+                Create Instructor
+            </button>
+        </h2>
+
+        <div id="collapseCreate" class="accordion-collapse collapse show" data-bs-parent="#instructorAccordion">
+            <div class="accordion-body">
+                <!-- old create form, unchanged except wrapped in this accordion -->
+                <form action="{{ url_for('crud_instructor') }}" method="POST">
+                    <div class="mb-3">
+                        <label>Instructor ID</label>
+                        <input type="text" name="Cid" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>First Name</label>
+                        <input type="text" name="Cfname" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Middle Name</label>
+                        <input type="text" name="Cmname" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Last Name</label>
+                        <input type="text" name="Clname" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Salary</label>
+                        <input type="text" name="Csalary" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Department ID for employment</label>
+                        <input type="text" name="Cdept" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Section ID for teaching</label>
+                        <input type="text" name="Csection" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Student ID for advising</label>
+                        <input type="text" name="Cstudent" required>
+                    </div>
+
+                    <input type="submit" value="Create Instructor">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- READ (from new) -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingRead">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseRead">
+                Read Instructor
+            </button>
+        </h2>
+
+        <div id="collapseRead" class="accordion-collapse collapse" data-bs-parent="#instructorAccordion">
+            <div class="accordion-body">
+                <form method="POST" action="{{ url_for('crud_instructor') }}">
+                    <input type="hidden" name="action" value="read">
+
+                    <div class="mb-3">
+                        <label>Select Instructor</label>
+                        <select name="instructor_id" class="form-select">
+                            {% for ins in instructors %}
+                                <option value="{{ ins[0] }}">{{ ins[0] }} — {{ ins[1] }} {{ ins[2] }} {{ ins[3] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary">Show Info</button>
+                </form>
+
+                {% if selected %}
+                    <hr>
+                    <h4>Instructor Details</h4>
+                    <table class="table table-bordered">
+                        <tr><th>ID</th><td>{{ selected[0] }}</td></tr>
+                        <tr><th>First</th><td>{{ selected[1] }}</td></tr>
+                        <tr><th>Middle</th><td>{{ selected[2] }}</td></tr>
+                        <tr><th>Last</th><td>{{ selected[3] }}</td></tr>
+                        <tr><th>Salary</th><td>{{ selected[4] }}</td></tr>
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATE (from new) -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingUpdate">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseUpdate">
+                Update Instructor
+            </button>
+        </h2>
+
+        <div id="collapseUpdate" class="accordion-collapse collapse" data-bs-parent="#instructorAccordion">
+            <div class="accordion-body">
+
+                <form method="POST" action="{{ url_for('crud_instructor') }}">
+                    <input type="hidden" name="action" value="update">
+
+                    <div class="mb-3">
+                        <label>Select Instructor</label>
+                        <select name="instructor_id" class="form-select" required>
+                            {% for ins in instructors %}
+                                <option value="{{ ins[0] }}">{{ ins[0] }} — {{ ins[1] }} {{ ins[2] }} {{ ins[3] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <p class="text-muted">Leave fields blank to keep them unchanged.</p>
+
+                    <div class="mb-3">
+                        <label>New First Name</label>
+                        <input type="text" name="new_fname" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label>New Middle Name</label>
+                        <input type="text" name="new_mname" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label>New Last Name</label>
+                        <input type="text" name="new_lname" class="form-control">
+                    </div>
+
+                    <div class="mb-3">
+                        <label>New Salary</label>
+                        <input type="number" step="0.01" name="new_salary" class="form-control">
+                    </div>
+
+                    <button class="btn btn-warning">Update</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE (from new) -->
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingDelete">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseDelete">
+                Delete Instructor
+            </button>
+        </h2>
+
+        <div id="collapseDelete" class="accordion-collapse collapse" data-bs-parent="#instructorAccordion">
+            <div class="accordion-body">
+
+                <form method="POST" action="{{ url_for('crud_instructor') }}">
+                    <input type="hidden" name="action" value="delete">
+
+                    <div class="mb-3">
+                        <label>Select Instructor</label>
+                        <select name="instructor_id" class="form-select" required>
+                            {% for ins in instructors %}
+                                <option value="{{ ins[0] }}">{{ ins[0] }} — {{ ins[1] }} {{ ins[2] }} {{ ins[3] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button class="btn btn-danger">Delete</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
