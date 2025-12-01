@@ -59,13 +59,22 @@
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
                 <form action="{{ url_for('crud_course') }}" method="POST">
-                    <div class="form-group">
-                        <label for="courses">Choose a Course:</label>
-                        <select name="course" id="course">
-                            {% for course in data %}
-                            <option value="{{ course }}">{{ course }}</option>
+                    <div class="container">
+                        <table cellpadding="5" cellspacing="5" class="table table-hover">
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Credits</th>
+                            </tr>
+                            {% for row in data %}
+                            <tr>
+                                <td>{{ row[0] }}</td> <!-- id -->
+                                <td>{{ row[1] }}</td> <!-- name -->
+                                <td>{{ row[2] }}</td> <!-- year -->
+                            </tr>
                             {% endfor %}
-                        </select>
+                        </table>
+
                     </div>
                 </form>
             </div>
@@ -85,11 +94,29 @@
                     <div class="form-group">
                         <label for="courses">Choose a Course:</label>
                         <select name="course" id="course">
-                            {% for course in data %}
-                            <option value="{{ course }}">{{ course }}</option>
+                            {% for cid, title, credits in data %}
+                            <option value="{{ cid }}">{{ title }}</option>
                             {% endfor %}
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Title" name="title">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Credits" name="credits">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Prerequisite Course" name="prereq">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Department" name="dept">
+                    </div>
+
+                    <input type="submit" value="Update Course" name="update">
                 </form>
             </div>
         </div>
@@ -108,11 +135,13 @@
                     <div class="form-group">
                         <label for="courses">Choose a Course:</label>
                         <select name="course" id="course">
-                            {% for course in data %}
-                            <option value="{{ course }}">{{ course }}</option>
+                            {% for cid, title, credits in data %}
+                            <option value="{{ cid }}">{{ title }}</option>
                             {% endfor %}
                         </select>
                     </div>
+
+                    <input type="submit" value="Delete" name="delete">
                 </form>
             </div>
         </div>
