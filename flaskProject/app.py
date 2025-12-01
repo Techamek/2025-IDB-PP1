@@ -1464,7 +1464,7 @@ def crud_course():
 
         except Exception as e:
             db.rollback()
-            msg = f"Error deleting student: {e}"
+            msg = f"Error deleting course: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
@@ -1481,7 +1481,13 @@ def crud_section():
     if request.method == 'GET':
         cursor = db.cursor()
         sql = """
-        SELECT s.sec_code, s.semester, s.year, h.course_id, c.title
+        SELECT 
+            s.section_id,
+            s.sec_code, 
+            s.semester, 
+            s.year, 
+            h.course_id, 
+            c.title
         FROM section s
         JOIN has_sections h ON s.section_id = h.section_id
         JOIN course c ON h.course_id = c.course_id
@@ -1490,12 +1496,7 @@ def crud_section():
         data = cursor.fetchall()
         cursor.close()
 
-        edited = []
-
-        for sec_code, semester, year, course_id, course_title in data:
-            edited.append(f"{semester} {year}: Section {sec_code} — {course_id} ({course_title})")
-
-        return render_template('actions/admin/crud_section.html', data = edited, msg=msg)
+        return render_template('actions/admin/crud_section.html', data = data, msg=msg)
     if request.method == "POST"  and 'Cid' in request.form: #we creating out here
         id = request.form['Cid']
         code = request.form['Ccode']
@@ -1534,25 +1535,91 @@ def crud_section():
             msg = 'Section Created!'
             db.commit()
             cursor.close()
+    elif request.method == "POST" and 'update' in request.form:
+        section_id = request.form.get('section')
+        course = request.form.get('course')
+        room = request.form.get('room')
+
+        cursor = db.cursor()
+
+        try:
+            section_data = {
+                'sec_code': request.form.get('code'),
+                'semester': request.form.get('sem'),
+                'year': request.form.get('year')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in section_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(section_id)
+                cursor.execute(f"UPDATE section SET {set_clause} WHERE section_id = %s", values)
+
+            if course:  # If user provided a prerequisite course
+                # Delete old prereqs first (simplest way to replace)
+                cursor.execute("DELETE FROM has_sections WHERE section_id = %s", (section_id,))
+                # Then insert the new one
+                cursor.execute("INSERT INTO has_sections (section_id, course_id) VALUES (%s, %s)", (section_id, course))
+
+            if room:
+                # Delete old department links
+                cursor.execute("DELETE FROM held_in WHERE section_id = %s", (section_id,))
+                # Insert the new department
+                cursor.execute("INSERT INTO held_in (section_id, room_id) VALUES (%s, %s)", (section_id, room))
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+    elif request.method == "POST" and 'delete' in request.form:
+        section_id = request.form.get('section')
+        cursor = db.cursor()
+        try:
+            cursor.execute("DELETE FROM held_in WHERE section_id = %s", (section_id,))
+
+            cursor.execute("DELETE FROM held_during WHERE section_id = %s", (section_id,))
+
+            cursor.execute("DELETE FROM has_sections WHERE section_id = %s", (section_id,))
+
+            cursor.execute("DELETE FROM is_offered WHERE section_id = %s", (section_id,))
+            
+            cursor.execute("DELETE FROM teaches WHERE section_id = %s", (section_id,))
+            
+            cursor.execute("DELETE FROM section WHERE section_id = %s", (section_id,))
+
+            db.commit()
+            msg = "Section deleted successfully!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error deleting section: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
     sql = """
-    SELECT s.sec_code, s.semester, s.year, h.course_id, c.title
-    FROM section s
-    JOIN has_sections h ON s.section_id = h.section_id
-    JOIN course c ON h.course_id = c.course_id
+    SELECT 
+            s.section_id,
+            s.sec_code, 
+            s.semester, 
+            s.year, 
+            h.course_id, 
+            c.title
+        FROM section s
+        JOIN has_sections h ON s.section_id = h.section_id
+        JOIN course c ON h.course_id = c.course_id
     """
     cursor.execute(sql)
     data = cursor.fetchall()
     cursor.close()
 
-    edited = []
-
-    for sec_code, semester, year, course_id, course_title in data:
-        edited.append(f"{semester} {year}: Section {sec_code} — {course_id} ({course_title})")
-
-    return render_template("actions/admin/crud_section.html",data=edited, msg=msg)
+    return render_template("actions/admin/crud_section.html",data=data, msg=msg)
 
 @app.route('/crud_classroom', methods=['POST', 'GET'])
 def crud_classroom():
