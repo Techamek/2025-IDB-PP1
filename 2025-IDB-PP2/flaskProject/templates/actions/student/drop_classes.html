@@ -1,0 +1,33 @@
+{% extends 'layout.html' %}
+
+{% block title %}Drop Class{% endblock %}
+
+{% block content %}
+
+<table class="table table-hover">
+    <tr>
+        <th>Course</th>
+        <th>Section</th>
+        <th>Semester</th>
+        <th>Action</th>
+    </tr>
+
+    {% for row in classes %}
+    <tr>
+        <td>{{ row[1] }} - {{ row[2] }}</td>
+        <td>{{ row[3] }}</td>
+        <td>{{ row[4] }} {{ row[5] }}</td>
+        <td>
+            <form method="POST">
+                <input type="hidden" name="enrollment_id" value="{{ row[0] }}">
+                <button type="submit">Drop</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+
+
+{% endblock %}

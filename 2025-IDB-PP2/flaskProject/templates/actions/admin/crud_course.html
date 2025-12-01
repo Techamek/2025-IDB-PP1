@@ -1,0 +1,151 @@
+{% extends 'layout.html' %}
+
+{% block title %}CRUD Course{% endblock %}
+
+{% block content %}
+<h1>CRUD Course</h1>
+<div class="msg">{{ msg }}</div>
+
+<div class="accordion" id="accordionExample">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+                aria-expanded="true" aria-controls="collapseOne">
+                Create
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_course') }}" method="POST">
+                    <div class="mb-3">
+                        <label>Course ID</label>
+                        <input type="text" name="Cid" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Title</label>
+                        <input type="text" name="Ctitle" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Credits</label>
+                        <input type="text" name="Ccredits" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Prerequisite Course ID</label>
+                        <input type="text" name="Cprereq" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Department ID</label>
+                        <input type="text" name="Cdept" required>
+                    </div>
+
+                    <input type="submit" value="Create Course">
+
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                Read
+            </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_course') }}" method="POST">
+                    <div class="container">
+                        <table cellpadding="5" cellspacing="5" class="table table-hover">
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Credits</th>
+                            </tr>
+                            {% for row in data %}
+                            <tr>
+                                <td>{{ row[0] }}</td> <!-- id -->
+                                <td>{{ row[1] }}</td> <!-- name -->
+                                <td>{{ row[2] }}</td> <!-- year -->
+                            </tr>
+                            {% endfor %}
+                        </table>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                Update
+            </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_course') }}" method="POST">
+                    <div class="form-group">
+                        <label for="courses">Choose a Course:</label>
+                        <select name="course" id="course">
+                            {% for cid, title, credits in data %}
+                            <option value="{{ cid }}">{{ title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Title" name="title">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Credits" name="credits">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Prerequisite Course" name="prereq">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Department" name="dept">
+                    </div>
+
+                    <input type="submit" value="Update Course" name="update">
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingFour">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                Delete
+            </button>
+        </h2>
+        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour"
+            data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <form action="{{ url_for('crud_course') }}" method="POST">
+                    <div class="form-group">
+                        <label for="courses">Choose a Course:</label>
+                        <select name="course" id="course">
+                            {% for cid, title, credits in data %}
+                            <option value="{{ cid }}">{{ title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <input type="submit" value="Delete" name="delete">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

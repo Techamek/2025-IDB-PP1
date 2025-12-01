@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block title %}Total Students by Department{% endblock %}
+
+{% block content %}
+<h2>Total Students (Past + Current) by Department</h2>
+
+{% if msg %}
+    <div class="msg">{{ msg }}</div>
+{% endif %}
+
+{% if results %}
+    <table class="table table-bordered table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Dept ID</th>
+                <th>Department Name</th>
+                <th>Total Students</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in results %}
+                <tr>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No data available.</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'layout.html' %}
+
+{% block title %}Remove Student from Section{% endblock %}
+
+{% block content %}
+<h1>Remove Student from Section</h1>
+
+{% if msg %}
+    <div class="alert alert-info">{{ msg }}</div>
+{% endif %}
+
+<div class="card p-4">
+    <p>
+        Use this form to remove a student from one of your sections.
+        You must enter the same course / section / term information used when they enrolled.
+    </p>
+
+    <form action="{{ url_for('remove_from_section') }}" method="POST">
+        <!-- Student ID -->
+        <div class="mb-3">
+            <label class="form-label">Student ID</label>
+            <input type="text" name="student_id" class="form-control" required>
+        </div>
+
+        <!-- Course (ID OR Title) -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Course ID (e.g., CS10101)</label>
+                <input type="text" name="courseid" class="form-control">
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Course Name (optional alternative)</label>
+                <input type="text" name="coursename" class="form-control">
+            </div>
+        </div>
+
+        <!-- Section code -->
+        <div class="mb-3">
+            <label class="form-label">Section Code (e.g., 001)</label>
+            <input type="text" name="section" class="form-control" required>
+        </div>
+
+        <!-- Term -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Semester</label>
+                <select name="semester" class="form-select" required>
+                    <option value="">Select</option>
+                    <option value="Spring">Spring</option>
+                    <option value="Summer">Summer</option>
+                    <option value="Fall">Fall</option>
+                    <option value="Winter">Winter</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Year</label>
+                <input type="number" name="year" class="form-control" min="2000" max="2099" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-danger">Remove Student from Section</button>
+    </form>
+</div>
+
+{% endblock %}

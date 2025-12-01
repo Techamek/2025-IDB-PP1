@@ -1,0 +1,116 @@
+{% extends 'layout.html' %}
+{% block title %}Assign Teachers{% endblock %}
+
+{% block content %}
+<h1>Assign / Modify / Remove Teachers</h1>
+
+<div class="msg">{{ msg }}</div>
+
+<div class="accordion" id="assignAccordion">
+
+    <!-- ASSIGN TEACHER -->
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#assignTeacher">
+                Assign Teacher to Section
+            </button>
+        </h2>
+        <div id="assignTeacher" class="accordion-collapse collapse show">
+            <div class="accordion-body">
+                <form method="POST">
+                    <label>Instructor:</label>
+                    <select name="assign_instructor" class="form-select">
+                        {% for i in instructors %}
+                            <option value="{{ i[0] }}">{{ i[0] }} — {{ i[1] }} {{ i[2] }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Section:</label>
+                    <select name="assign_section" class="form-select">
+                        {% for s in sections %}
+                            <option value="{{ s[0] }}">
+                                {{ s[3] }} {{ s[2] }} — {{ s[1] }} ({{ s[4] }}: {{ s[5] }})
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="submit" name="assign" value="Assign Teacher" class="btn btn-primary mt-3">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODIFY TEACHER -->
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#modifyTeacher">
+                Modify Teacher for Section
+            </button>
+        </h2>
+        <div id="modifyTeacher" class="accordion-collapse collapse">
+            <div class="accordion-body">
+                <form method="POST">
+
+                    <label>Section:</label>
+                    <select name="modify_section" class="form-select">
+                        {% for s in sections %}
+                            <option value="{{ s[0] }}">
+                                {{ s[3] }} {{ s[2] }} — {{ s[1] }} ({{ s[4] }}: {{ s[5] }})
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Current Instructor:</label>
+                    <select name="old_instructor" class="form-select">
+                        {% for i in instructors %}
+                            <option value="{{ i[0] }}">{{ i[0] }} — {{ i[1] }} {{ i[2] }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label>New Instructor:</label>
+                    <select name="new_instructor" class="form-select">
+                        {% for i in instructors %}
+                            <option value="{{ i[0] }}">{{ i[0] }} — {{ i[1] }} {{ i[2] }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="submit" name="modify" value="Modify Teacher" class="btn btn-warning mt-3">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- REMOVE TEACHER -->
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#removeTeacher">
+                Remove Teacher from Section
+            </button>
+        </h2>
+        <div id="removeTeacher" class="accordion-collapse collapse">
+            <div class="accordion-body">
+                <form method="POST">
+                    <label>Instructor:</label>
+                    <select name="remove_instructor" class="form-select">
+                        {% for i in instructors %}
+                            <option value="{{ i[0] }}">{{ i[0] }} — {{ i[1] }} {{ i[2] }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Section:</label>
+                    <select name="remove_section" class="form-select">
+                        {% for s in sections %}
+                            <option value="{{ s[0] }}">
+                                {{ s[3] }} {{ s[2] }} — {{ s[1] }} ({{ s[4] }}: {{ s[5] }})
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="submit" name="remove" value="Remove Teacher" class="btn btn-danger mt-3">
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
