@@ -1,17 +1,21 @@
 {% extends 'layout.html' %}
 
-{% block title %}Submit Grades{% endblock %}
+{% block title %}Remove Student from Section{% endblock %}
 
 {% block content %}
-<h1>Submit Grades</h1>
+<h1>Remove Student from Section</h1>
 
 {% if msg %}
     <div class="alert alert-info">{{ msg }}</div>
 {% endif %}
 
 <div class="card p-4">
-    <form action="{{ url_for('submit_grades') }}" method="POST">
+    <p>
+        Use this form to remove a student from one of your sections.
+        You must enter the same course / section / term information used when they enrolled.
+    </p>
 
+    <form action="{{ url_for('remove_from_section') }}" method="POST">
         <!-- Student ID -->
         <div class="mb-3">
             <label class="form-label">Student ID</label>
@@ -56,22 +60,7 @@
             </div>
         </div>
 
-        <!-- Grade -->
-        <div class="mb-3">
-            <label class="form-label">Grade</label>
-            <select name="grade" class="form-select" required>
-                <option value="">Select Grade</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="F">F</option>
-                <option value="I">I</option>
-                <option value="W">W</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Submit Grade</button>
+        <button type="submit" class="btn btn-danger">Remove Student from Section</button>
     </form>
 </div>
 

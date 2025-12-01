@@ -1,16 +1,22 @@
 {% extends 'layout.html' %}
 
-{% block title %}Submit Grades{% endblock %}
+{% block title %}Change Grades{% endblock %}
 
 {% block content %}
-<h1>Submit Grades</h1>
+<h1>Change Grades</h1>
 
 {% if msg %}
     <div class="alert alert-info">{{ msg }}</div>
 {% endif %}
 
+{% if old_grade is not none %}
+    <div class="alert alert-secondary">
+        Previous grade for this enrollment: <strong>{{ old_grade }}</strong>
+    </div>
+{% endif %}
+
 <div class="card p-4">
-    <form action="{{ url_for('submit_grades') }}" method="POST">
+    <form action="{{ url_for('change_grades') }}" method="POST">
 
         <!-- Student ID -->
         <div class="mb-3">
@@ -56,9 +62,9 @@
             </div>
         </div>
 
-        <!-- Grade -->
+        <!-- New Grade -->
         <div class="mb-3">
-            <label class="form-label">Grade</label>
+            <label class="form-label">New Grade</label>
             <select name="grade" class="form-select" required>
                 <option value="">Select Grade</option>
                 <option value="A">A</option>
@@ -71,7 +77,7 @@
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">Submit Grade</button>
+        <button type="submit" class="btn btn-primary">Update Grade</button>
     </form>
 </div>
 

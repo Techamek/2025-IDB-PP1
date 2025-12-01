@@ -1,0 +1,80 @@
+{% extends 'layout.html' %}
+
+{% block title %}Sections You Are Teaching{% endblock %}
+
+{% block content %}
+<h1>Sections You Are Teaching</h1>
+
+{% if msg %}
+    <div class="alert alert-info">{{ msg }}</div>
+{% endif %}
+
+{% if sections %}
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Course</th>
+                <th>Section</th>
+                <th>Term</th>
+                <th>Location</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sec in sections %}
+                {# sec indices:
+                    0 section_id
+                    1 sec_code
+                    2 semester
+                    3 year
+                    4 course_id
+                    5 title
+                    6 building
+                    7 room_number
+                    8 day
+                    9 start_hr
+                    10 start_min
+                    11 end_hr
+                    12 end_min
+                #}
+                {% set course_id = sec[4] %}
+                {% set title = sec[5] %}
+                {% set sec_code = sec[1] %}
+                {% set semester = sec[2] %}
+                {% set year = sec[3] %}
+                {% set building = sec[6] %}
+                {% set room = sec[7] %}
+                {% set day = sec[8] %}
+                {% set sh = sec[9] %}
+                {% set sm = sec[10] %}
+                {% set eh = sec[11] %}
+                {% set em = sec[12] %}
+
+                <tr>
+                    <td>{{ course_id }} — {{ title }}</td>
+                    <td>{{ sec_code }}</td>
+                    <td>{{ semester }} {{ year }}</td>
+                    <td>
+                        {% if building and room %}
+                            {{ building }} {{ room }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if day and sh is not none and sm is not none and eh is not none and em is not none %}
+                            {{ day }}
+                            {{ "%02d"|format(sh) }}:{{ "%02d"|format(sm) }}
+                            -
+                            {{ "%02d"|format(eh) }}:{{ "%02d"|format(em) }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% endblock %}

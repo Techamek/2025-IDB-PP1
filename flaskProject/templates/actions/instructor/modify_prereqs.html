@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block title %}Modify Course Prerequisites{% endblock %}
+
+{% block content %}
+<h1>Modify Course Prerequisites</h1>
+
+{% if msg %}
+    <div class="alert alert-info">{{ msg }}</div>
+{% endif %}
+
+<div class="card p-4">
+    <p>
+        Use this form to <strong>add</strong> or <strong>remove</strong> prerequisite
+        relationships between courses.
+    </p>
+
+    <form action="{{ url_for('modify_prereqs') }}" method="POST">
+        <!-- Course that has the prerequisite -->
+        <div class="mb-3">
+            <label class="form-label">Course ID</label>
+            <input type="text" name="course_id" class="form-control"
+                   placeholder="e.g., CS10001" required>
+        </div>
+
+        <!-- Course that is the prerequisite -->
+        <div class="mb-3">
+            <label class="form-label">Prerequisite Course ID</label>
+            <input type="text" name="prereq_id" class="form-control"
+                   placeholder="e.g., CS00010" required>
+        </div>
+
+        <!-- Action: add or remove -->
+        <div class="mb-3">
+            <label class="form-label">Action</label>
+            <select name="action" class="form-select" required>
+                <option value="">Select Action</option>
+                <option value="add">Add Prerequisite</option>
+                <option value="remove">Remove Prerequisite</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Apply Change</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+
+{% block title %}Average Grade by Department{% endblock %}
+
+{% block content %}
+<div class="container">
+    <form method="get" action="{{ url_for('average_dept') }}">
+        <input type="hidden" name="student_id" value="{{ student_id }}">
+        <input type="hidden" name="name" value="{{ name }}">
+
+        <label for="department">Filter by Department:</label>
+        <select name="department" id="department" onchange="this.form.submit()">
+            <option value="">--Select Department--</option>
+            {% for id, name in data %}
+            <option value="{{ name }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+
+    </form>
+    <div class="links">
+        <a href="{{ url_for('home') }}">Back</a>
+    </div>
+</div>
+
+{% if numeric_avg is not none %}
+    <h3>Average Grade (letter): {{ letter_avg }}</h3>
+{% elif selected_dept %}
+    <h3>No grades available</h3>
+{% endif %}
+
+
+
+
+
+
+{% endblock %}
