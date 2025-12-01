@@ -1915,11 +1915,11 @@ def crud_timeslot():
             cursor.execute("DELETE FROM held_during WHERE time_slot_id = %s", (time_slot_id,))
 
             db.commit()
-            msg = "Section deleted successfully!"
+            msg = "Timeslot deleted successfully!"
 
         except Exception as e:
             db.rollback()
-            msg = f"Error deleting section: {e}"
+            msg = f"Error deleting timeslot: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
@@ -1951,16 +1951,12 @@ def crud_instructor():
     msg=''
     if request.method == 'GET':
         cursor = db.cursor()
-        sql = "SELECT first_name, middle_name, last_name from instructor;"
+        sql = "SELECT instructor_id, first_name, middle_name, last_name, salary from instructor;"
         cursor.execute(sql)
         data = cursor.fetchall()        
         cursor.close()
-        edited = []
 
-        for fname, mname, lname in data:
-            edited.append(f"{lname}, {fname} {mname}")
-
-        return render_template('actions/admin/crud_instructor.html', data = edited, msg=msg)
+        return render_template('actions/admin/crud_instructor.html', data = data, msg=msg)
     if request.method == "POST"  and 'Cid' in request.form: #we creating out here
         id = request.form['Cid']
         fname = request.form['Cfname']
@@ -2000,18 +1996,82 @@ def crud_instructor():
             msg = 'Instructor Created!'
             db.commit()
             cursor.close()
+    elif request.method =="POST" and 'update' in request.form:
+        instructor_id = request.form.get('instructor')
+        section_id = request.form.get('section')
+        dept_id = request.form.get('dept')
+        student_id = request.form.get('student')
+
+        cursor = db.cursor()
+
+        try:
+            section_data = {
+                'first_name': request.form.get('fname'),
+                'middle_name': request.form.get('mname'),
+                'last_name': request.form.get('lname'),
+                'salary': request.form.get('salary')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in section_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(instructor_id)
+                cursor.execute(f"UPDATE instructor SET {set_clause} WHERE instructor_id = %s", values)
+
+            if section_id:  
+                cursor.execute("DELETE FROM teaches WHERE instructor_id = %s", (instructor_id,))
+                 
+                cursor.execute("INSERT INTO teaches (instructor_id, section_id) VALUES (%s, %s)", (instructor_id, section_id))
+
+            if dept_id:  
+                cursor.execute("DELETE FROM employed WHERE instructor_id = %s", (instructor_id,))
+                 
+                cursor.execute("INSERT INTO employed (instructor_id,dept_id) VALUES (%s, %s)", (instructor_id, dept_id))
+
+            if student_id:
+                cursor.execute("DELETE FROM advisor WHERE instructor_id = %s", (instructor_id,))
+                 
+                cursor.execute("INSERT INTO advisor (student_id, instructor_id) VALUES (%s, %s)", (student_id, instructor_id))
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+    elif request.method == "POST" and 'delete' in request.form:
+        instructor_id = request.form.get('instructor')
+
+        cursor = db.cursor()
+        try:
+            cursor.execute("DELETE FROM employed WHERE instructor_id = %s", (instructor_id,))
+
+            cursor.execute("DELETE FROM advisor WHERE instructor_id = %s", (instructor_id,))
+            
+            cursor.execute("DELETE FROM teaches WHERE instructor_id = %s", (instructor_id,))
+            
+            cursor.execute("DELETE FROM instructor WHERE instructor_id = %s", (instructor_id,))
+
+            db.commit()
+            msg = "Instructor deleted successfully!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error deleting Instructor: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
-    sql = "SELECT first_name, middle_name, last_name from instructor;"
+    sql = "SELECT instructor_id, first_name, middle_name, last_name, salary from instructor;"
     cursor.execute(sql)
     data = cursor.fetchall()        
     cursor.close()
-    edited = []
 
-    for fname, mname, lname in data:
-            edited.append(f"{lname}, {fname} {mname}")
-    return render_template("actions/admin/crud_instructor.html",data=edited, msg=msg)
+    return render_template("actions/admin/crud_instructor.html",data=data, msg=msg)
 
 @app.route('/crud_student', methods=['POST', 'GET'])
 def crud_student():
@@ -2227,7 +2287,82 @@ def crud_student():
         edited4.append(i[0])
     return render_template("actions/admin/crud_student.html",data=data, data2=edited2, data3=edited3, data4=edited4, msg=msg)
 
-@app.route('/assign_teacher', methods=['POST', 'GET'])
+@app.route('/assign_teacher', methods=['GET', 'POST'])
+def assign_teacher():
+    if 'loggedin' not in session or session.get('role') != "Administrator":
+        return redirect(url_for('login'))
+
+    msg = ''
+    cursor = db.cursor()
+
+    # --- Load instructors and sections for dropdowns ---
+    cursor.execute("SELECT instructor_id, first_name, last_name FROM instructor")
+    instructors = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT s.section_id, s.sec_code, s.semester, s.year, c.course_id, c.title
+        FROM section s
+        JOIN has_sections hs ON hs.section_id = s.section_id
+        JOIN course c ON c.course_id = hs.course_id
+        ORDER BY s.year DESC, s.semester
+    """)
+    sections = cursor.fetchall()
+
+    if request.method == 'POST' and 'assign' in request.form:
+        instructor_id = request.form['assign_instructor']
+        section_id = request.form['assign_section']
+
+        try:
+            cursor.execute("""
+                INSERT INTO teaches (instructor_id, section_id)
+                VALUES (%s, %s)
+            """, (instructor_id, section_id))
+            db.commit()
+            msg = "Teacher assigned successfully!"
+        except Exception as e:
+            db.rollback()
+            msg = f"Error: {str(e)}"
+
+    if request.method == 'POST' and 'modify' in request.form:
+        old_instructor = request.form['old_instructor']
+        new_instructor = request.form['new_instructor']
+        section_id = request.form['modify_section']
+
+        try:
+            cursor.execute("""
+                UPDATE teaches
+                SET instructor_id = %s
+                WHERE instructor_id = %s AND section_id = %s
+            """, (new_instructor, old_instructor, section_id))
+            db.commit()
+            msg = "Teacher modified successfully!"
+        except Exception as e:
+            db.rollback()
+            msg = f"Error: {str(e)}"
+
+    if request.method == 'POST' and 'remove' in request.form:
+        instructor_id = request.form['remove_instructor']
+        section_id = request.form['remove_section']
+
+        try:
+            cursor.execute("""
+                DELETE FROM teaches
+                WHERE instructor_id = %s AND section_id = %s
+            """, (instructor_id, section_id))
+            db.commit()
+            msg = "Teacher removed successfully!"
+        except Exception as e:
+            db.rollback()
+            msg = f"Error: {str(e)}"
+
+    cursor.close()
+
+    return render_template(
+        "actions/admin/assign_teacher.html",
+        instructors=instructors,
+        sections=sections,
+        msg=msg
+    )
 
 ######################################################
 # BONUS FINAL
