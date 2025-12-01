@@ -168,7 +168,7 @@
 
         <div id="collapseDelete" class="accordion-collapse collapse" data-bs-parent="#instructorAccordion">
            <div class="accordion-body">
-                <form action="{{ url_for('crud_section') }}" method="POST">
+                <form action="{{ url_for('crud_instructor') }}" method="POST">
                     <div class="form-group">
                         <label for="instructors">Choose an Instructor:</label>
                         <select name="instructor" id="instructor">
@@ -185,5 +185,6 @@
     </div>
 
 </div>
+
 
 {% endblock %}
