@@ -2702,37 +2702,7 @@ def current_stud_dept():
     )
 
 ######################################################
-# Search form route
-@app.route('/searchform')
-def searchform():
-    if 'loggedin' not in session:
-        return redirect(url_for('login'))
-    return render_template('form.html', username=session['username'])
 
-# Search route
-@app.route('/search', methods=['POST', 'GET'])
-def search():
-    if 'loggedin' not in session:
-        return redirect(url_for('login'))
-
-    if request.method == 'GET':
-        return "Fill out the Search Form"
-     
-    if request.method == 'POST':
-        name = request.form['name']
-        id = request.form['id']
-        data = []
-        if(id != '' or name != ''):
-            cursor = db.cursor()        
-            if name:
-                cursor.execute("SELECT * from instructor where name = %s", [name])
-            if id:
-                cursor.execute("SELECT * from instructor where ID = %s", [id])
-                    
-            data = cursor.fetchall()        
-            cursor.close()
-            print("Found: ", data)
-        return render_template('results.html', data=data)
 
 # Run the application
 app.run(host='localhost', port=4500)
