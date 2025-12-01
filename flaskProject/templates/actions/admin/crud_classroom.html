@@ -3,13 +3,14 @@
 {% block title %}CRUD Classroom{% endblock %}
 
 {% block content %}
+<h1>CRUD Classroom</h1>
 <div class="msg">{{ msg }}</div>
 
 <div class="accordion" id="accordionExample">
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
-                aria-expanded="true" aria-controls="collapseOne" >
+                aria-expanded="true" aria-controls="collapseOne">
                 Create
             </button>
         </h2>
@@ -53,16 +54,20 @@
         <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
-                <form action="{{ url_for('crud_classroom') }}" method="POST">
-                    <div class="form-group">
-                        <label for="classes">Choose a Classroom:</label>
-                        <select name="classroom" id="classroom">
-                            {% for class in data %}
-                            <option value="{{ class }}">{{ class }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </form>
+                <table cellpadding="5" cellspacing="5" class="table table-hover">
+                    <tr>
+                        <th>Building</th>
+                        <th>Room Number</th>
+                        <th>Capacity</th>
+                    </tr>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ row[1] }}</td> <!-- building -->
+                        <td>{{ row[2] }}</td> <!-- num -->
+                        <td>{{ row[3] }}</td> <!-- cap -->
+                    </tr>
+                    {% endfor %}
+                </table>
             </div>
         </div>
     </div>
@@ -80,11 +85,26 @@
                     <div class="form-group">
                         <label for="classes">Choose a Classroom:</label>
                         <select name="classroom" id="classroom">
-                            {% for class in data %}
-                            <option value="{{ class }}">{{ class }}</option>
+                            {% for id, build, num, cap in data %}
+                            <option value="{{ id }}">{{ build }} {{num}}</option>
                             {% endfor %}
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Building" name="build">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Room Number" name="num">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Capacity" name="cap">
+                    </div>
+
+                    <input type="submit" value="Update Room" name="update">
+
                 </form>
             </div>
         </div>
@@ -103,11 +123,14 @@
                     <div class="form-group">
                         <label for="classes">Choose a Classroom:</label>
                         <select name="classroom" id="classroom">
-                            {% for class in data %}
-                            <option value="{{ class }}">{{ class }}</option>
+                            {% for id, build, num, cap in data %}
+                            <option value="{{ id }}">{{ build }} {{num}}</option>
                             {% endfor %}
                         </select>
                     </div>
+
+                    <input type="submit" value="Delete Room" name="delete">
+
                 </form>
             </div>
         </div>

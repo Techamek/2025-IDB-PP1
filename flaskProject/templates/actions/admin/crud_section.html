@@ -3,6 +3,7 @@
 {% block title %}CRUD Section{% endblock %}
 
 {% block content %}
+<h1>CRUD Section</h1>
 <div class="msg">{{ msg }}</div>
 
 <div class="accordion" id="accordionExample">
@@ -98,16 +99,16 @@
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
                 <form action="{{ url_for('crud_section') }}" method="POST">
+
                     <div class="form-group">
-                        <div class="form-group">
-                            <label for="sections">Choose a Section:</label>
-                            <select name="section" id="section">
-                                {% for sid, code, sem, year, cid, title in data %}
-                                <option value="{{ sid }}">{{ title }}: Section {{code}}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        <label for="sections">Choose a Section:</label>
+                        <select name="section" id="section">
+                            {% for sid, code, sem, year, cid, title in data %}
+                            <option value="{{ sid }}">{{ title }}: Section {{code}}</option>
+                            {% endfor %}
+                        </select>
                     </div>
+
 
                     <div class="mb-3">
                         <input type="text" placeholder="Section Code" name="code">

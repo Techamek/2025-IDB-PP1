@@ -3,6 +3,7 @@
 {% block title %}CRUD Time Slot{% endblock %}
 
 {% block content %}
+<h1>CRUD Time Slot</h1>
 <div class="msg">{{ msg }}</div>
 
 <div class="accordion" id="accordionExample">
@@ -68,16 +69,23 @@
         <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
             data-bs-parent="#accordionExample">
             <div class="accordion-body">
-                <form action="{{ url_for('crud_timeslot') }}" method="POST">
-                    <div class="form-group">
-                        <label for="times">Choose a Time Slot:</label>
-                        <select name="time" id="time">
-                            {% for time in data %}
-                            <option value="{{ time }}">{{ time }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </form>
+                <div class="container">
+                    <table cellpadding="5" cellspacing="5" class="table table-hover">
+                        <tr>
+                            <th>Day</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                        </tr>
+                        {% for row in data %}
+                        <tr>
+                            <td>{{ row[1] }}</td> 
+                            <td>{{ row[2] }}:{{ row[3] }}</td> 
+                            <td>{{ row[4] }}:{{ row[5] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+
+                </div>
             </div>
         </div>
     </div>
@@ -95,11 +103,37 @@
                     <div class="form-group">
                         <label for="times">Choose a Time Slot:</label>
                         <select name="time" id="time">
-                            {% for time in data %}
-                            <option value="{{ time }}">{{ time }}</option>
+                            {% for tid, day, sh,sm, eh, em, sid in data %}
+                            <option value="{{ tid }}">{{ day }}, {{ sh }}:{{ sm }}-{{ eh }}:{{ em }}</option>
                             {% endfor %}
                         </select>
                     </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Day" name="day">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Start Hour" name="sh">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Start Minutes" name="sm">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="End Hour" name="eh">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="End Minutes" name="em">
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" placeholder="Section ID" name="section">
+                    </div>
+
+                    <input type="submit" value="Update Time Slot" name="update">
                 </form>
             </div>
         </div>
@@ -118,11 +152,13 @@
                     <div class="form-group">
                         <label for="times">Choose a Time Slot:</label>
                         <select name="time" id="time">
-                            {% for time in data %}
-                            <option value="{{ time }}">{{ time }}</option>
+                            {% for tid, day, sh,sm, eh, em, sid in data %}
+                            <option value="{{ tid }}">{{ day }}, {{ sh }}:{{ sm }}-{{ eh }}:{{ em }}</option>
                             {% endfor %}
                         </select>
                     </div>
+
+                    <input type="submit" value="Delete Time Slot" name="delete">
                 </form>
             </div>
         </div>
