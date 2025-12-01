@@ -1600,6 +1600,7 @@ def crud_section():
         except Exception as e:
             db.rollback()
             msg = f"Error deleting section: {e}"
+  
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
@@ -1627,17 +1628,12 @@ def crud_classroom():
     msg=''
     if request.method == 'GET':
         cursor = db.cursor()
-        sql = "SELECT building, room_number FROM classroom;"
+        sql = "SELECT room_id, building, room_number, capacity FROM classroom;"
         cursor.execute(sql)
         data = cursor.fetchall()
         cursor.close()
 
-        edited = []
-
-        for building, room in data:
-            edited.append(f"{building}-{room}")
-
-        return render_template('actions/admin/crud_classroom.html', data = edited, msg=msg)
+        return render_template('actions/admin/crud_classroom.html', data = data, msg=msg)
     if request.method == "POST"  and 'Cid' in request.form: #we creating out here
         id = request.form['Cid']
         building = request.form['Cbuilding']
@@ -1662,19 +1658,58 @@ def crud_classroom():
             msg = 'Classroom Created!'
             db.commit()
             cursor.close()
+    elif request.method == "POST" and 'update' in request.form:
+        room_id = request.form.get('classroom')
+
+        cursor = db.cursor()
+
+        try:
+            section_data = {
+                'building': request.form.get('build'),
+                'room_number': request.form.get('num'),
+                'capacity': request.form.get('cap')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in section_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(room_id)
+                cursor.execute(f"UPDATE classroom SET {set_clause} WHERE room_id = %s", values)
+
+            db.commit()
+            msg = "Info updated!"
+        
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+    elif request.method == "POST" and 'delete' in request.form:
+        room_id = request.form.get('classroom')
+        cursor = db.cursor()
+        try:
+            cursor.execute("DELETE FROM classroom WHERE room_id = %s", (room_id,))
+
+            cursor.execute("DELETE FROM held_in WHERE room_id = %s", (room_id,))
+
+            db.commit()
+            msg = "Classroom deleted successfully!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error deleting section: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
-    sql = "SELECT building, room_number FROM classroom;"
+    sql = "SELECT room_id, building, room_number, capacity FROM classroom;"
     cursor.execute(sql)
     data = cursor.fetchall()
     cursor.close()
 
-    edited = []
-
-    for building, room in data:
-        edited.append(f"{building}-{room}")
-    return render_template("actions/admin/crud_classroom.html",data=edited, msg=msg)
+    return render_template("actions/admin/crud_classroom.html",data=data, msg=msg)
 
 @app.route('/crud_department', methods=['POST', 'GET'])
 def crud_department():
@@ -1682,16 +1717,12 @@ def crud_department():
     msg=''
     if request.method == 'GET':
         cursor = db.cursor()
-        sql = "SELECT dept_name as dept_name from department;"
+        sql = "SELECT dept_id, dept_name, building, budget from department;"
         cursor.execute(sql)
         data = cursor.fetchall()        
         cursor.close()
-        edited = []
 
-        for i in data:
-            edited.append(i[0])
-
-        return render_template('actions/admin/crud_department.html', data = edited, msg=msg)
+        return render_template('actions/admin/crud_department.html', data = data, msg=msg)
     if request.method == "POST"  and 'Cid' in request.form: #we creating out here
         id = request.form['Cid']
         name = request.form['Cname']
@@ -1717,18 +1748,62 @@ def crud_department():
             msg = 'Department Created!'
             db.commit()
             cursor.close()
+    elif request.method =="POST" and 'update' in request.form:
+        dept_id = request.form.get('dept')
+
+        cursor = db.cursor()
+
+        try:
+            dept_data = {
+                'dept_name': request.form.get('name'),
+                'building': request.form.get('build'),
+                'budget': request.form.get('budget'),
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in dept_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(dept_id)
+                cursor.execute(f"UPDATE department SET {set_clause} WHERE dept_id = %s", values)
+
+            db.commit()
+            msg = "Info updated!"
+        
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+    elif request.method == "POST" and 'delete' in request.form:
+        dept_id = request.form.get('dept')
+        cursor = db.cursor()
+        try:
+            cursor.execute("DELETE FROM department WHERE dept_id = %s", (dept_id,))
+
+            cursor.execute("DELETE FROM employed WHERE dept_id = %s", (dept_id,))
+            
+            cursor.execute("DELETE FROM has_course WHERE dept_id = %s", (dept_id,))
+            
+            cursor.execute("DELETE FROM under WHERE dept_id = %s", (dept_id,))
+
+            db.commit()
+            msg = "Department deleted successfully!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error deleting section: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
-    sql = "SELECT dept_name as dept_name from department;"
+    sql = "SELECT dept_id, dept_name, building, budget from department;"
     cursor.execute(sql)
     data = cursor.fetchall()        
     cursor.close()
-    edited = []
 
-    for i in data:
-        edited.append(i[0])
-    return render_template("actions/admin/crud_department.html",data=edited, msg=msg)
+    return render_template("actions/admin/crud_department.html",data=data, msg=msg)
 
 @app.route('/crud_timeslot', methods=['POST', 'GET'])
 def crud_timeslot():
@@ -1736,16 +1811,27 @@ def crud_timeslot():
     msg=''
     if request.method == 'GET':
         cursor = db.cursor()
-        sql = "SELECT day, start_hr, start_min, end_hr, end_min from time_slot;"
+        sql = """
+        SELECT 
+            t.time_slot_id,
+            t.day,
+            t.start_hr,
+            t.start_min,
+            t.end_hr,
+            t.end_min,
+            h.section_id
+        FROM time_slot t
+        LEFT JOIN held_during h 
+            ON t.time_slot_id = h.time_slot_id
+        LEFT JOIN section s
+            ON h.section_id = s.section_id
+        ORDER BY t.time_slot_id;
+        """
         cursor.execute(sql)
         data = cursor.fetchall()        
         cursor.close()
-        edited = []
 
-        for day, start_hr, start_min, end_hr, end_min in data:
-            edited.append(f"{day}, {start_hr}:{start_min}-{end_hr}:{end_min}")
-
-        return render_template('actions/admin/crud_timeslot.html', data = edited, msg=msg)
+        return render_template('actions/admin/crud_timeslot.html', data = data, msg=msg)
     if request.method == "POST"  and 'Cid' in request.form: #we creating out here
         id = request.form['Cid']
         day = request.form['Cday']
@@ -1782,19 +1868,82 @@ def crud_timeslot():
             msg = 'Time Slot Created!'
             db.commit()
             cursor.close()
-    
+    elif request.method == "POST" and 'update' in request.form:
+        time_slot_id = request.form.get('time')
+        section_id = request.form.get('section')
+
+        cursor = db.cursor()
+
+        try:
+            section_data = {
+                'day': request.form.get('day'),
+                'start_hr': request.form.get('sh'),
+                'start_min': request.form.get('sm'),
+                'end_hr': request.form.get('eh'),
+                'end_min': request.form.get('em')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in section_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(time_slot_id)
+                cursor.execute(f"UPDATE time_slot SET {set_clause} WHERE time_slot_id = %s", values)
+
+            if section_id:  # If user provided a prerequisite course
+                # Delete old prereqs first (simplest way to replace)
+                cursor.execute("DELETE FROM held_during WHERE time_slot_id = %s", (time_slot_id,))
+                # Then insert the new one
+                cursor.execute("INSERT INTO held_during (section_id, time_slot_id) VALUES (%s, %s)", (section_id, time_slot_id))
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+    elif request.method == "POST" and 'delete' in request.form:
+        time_slot_id = request.form.get('time')
+        cursor = db.cursor()
+        try:
+            cursor.execute("DELETE FROM time_slot WHERE time_slot_id = %s", (time_slot_id,))
+
+            cursor.execute("DELETE FROM held_during WHERE time_slot_id = %s", (time_slot_id,))
+
+            db.commit()
+            msg = "Section deleted successfully!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error deleting section: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
-    sql = "SELECT day, start_hr, start_min, end_hr, end_min from time_slot;"
+    sql = """
+        SELECT 
+            t.time_slot_id,
+            t.day,
+            t.start_hr,
+            t.start_min,
+            t.end_hr,
+            t.end_min,
+            h.section_id
+        FROM time_slot t
+        LEFT JOIN held_during h 
+            ON t.time_slot_id = h.time_slot_id
+        LEFT JOIN section s
+            ON h.section_id = s.section_id
+        ORDER BY t.time_slot_id;
+        """
     cursor.execute(sql)
     data = cursor.fetchall()        
     cursor.close()
-    edited = []
 
-    for i in data:
-        edited.append(f"{day}, {start_hr}:{start_min}-{end_hr}:{end_min}")
-    return render_template("actions/admin/crud_timeslot.html",data=edited, msg=msg)
+    return render_template('actions/admin/crud_timeslot.html', data = data, msg=msg)
 
 @app.route('/crud_instructor', methods=['POST', 'GET'])
 def crud_instructor():
@@ -2013,16 +2162,12 @@ def crud_student():
         student_id = request.form.get('student')
         cursor = db.cursor()
         try:
-            #delete from declared table
             cursor.execute("DELETE FROM declared WHERE student_id = %s", (student_id,))
 
-            #delete from advisor table
             cursor.execute("DELETE FROM advisor WHERE student_id = %s", (student_id,))
 
-            #delete from enrolled table
             cursor.execute("DELETE FROM enrolled WHERE student_id = %s", (student_id,))
 
-            #delete from student table
             cursor.execute("DELETE FROM student WHERE student_id = %s", (student_id,))
 
             db.commit()
