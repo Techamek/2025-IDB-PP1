@@ -57,12 +57,14 @@
                 <div class="container">
                     <table cellpadding="5" cellspacing="5" class="table table-hover">
                         <tr>
+                            <th>ID</th>
                             <th>Name</th>
                             <th>Building</th>
                             <th>Budget</th>
                         </tr>
                         {% for row in data %}
                         <tr>
+                            <td>{{ row[0] }}</td> <!-- id -->
                             <td>{{ row[1] }}</td> <!-- name -->
                             <td>{{ row[2] }}</td> <!-- building -->
                             <td>{{ row[3] }}</td> <!-- budget -->

@@ -72,12 +72,14 @@
                 <div class="container">
                     <table cellpadding="5" cellspacing="5" class="table table-hover">
                         <tr>
+                            <th>ID</th>
                             <th>Day</th>
                             <th>Start Time</th>
                             <th>End Time</th>
                         </tr>
                         {% for row in data %}
                         <tr>
+                            <td>{{ row[0] }}</td> 
                             <td>{{ row[1] }}</td> 
                             <td>{{ row[2] }}:{{ row[3] }}</td> 
                             <td>{{ row[4] }}:{{ row[5] }}</td>
