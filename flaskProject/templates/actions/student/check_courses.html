@@ -33,6 +33,7 @@
             <th>Course Name</th>
             <th>Year</th>
             <th>Semester</th>
+            <th>Status</th>
         </tr>
         {% for row in data %}
         <tr>
@@ -40,6 +41,7 @@
             <td>{{ row[1] }}</td> <!-- course title -->
             <td>{{ row[2] }}</td> <!-- semester -->
             <td>{{ row[3] }}</td> <!-- year -->
+            <td>{{ row[4] }}</td> <!-- status -->
         </tr>
         {% endfor %}
     </table>
