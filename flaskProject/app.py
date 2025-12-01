@@ -2230,7 +2230,77 @@ def crud_student():
 @app.route('/assign_teacher', methods=['POST', 'GET'])
 
 ######################################################
+# BONUS FINAL
+######################################################
 
+@app.route('/average_dept', methods=['GET'])
+def average_dept():
+    cursor = db.cursor()
+
+    # Load department list for the dropdown
+    cursor.execute("SELECT dept_id, dept_name FROM department;")
+    data = cursor.fetchall()
+
+    selected_dept = request.args.get('department')
+    numeric_avg = None
+    letter_avg = None
+
+    if selected_dept:
+        sql = """
+        SELECT 
+            AVG(
+                CASE e.grade
+                    WHEN 'A' THEN 4.0
+                    WHEN 'B' THEN 3.0
+                    WHEN 'C' THEN 2.0
+                    WHEN 'D' THEN 1.0
+                    WHEN 'F' THEN 0.0
+                    ELSE NULL
+                END
+            ) AS avg_gpa
+        FROM student s
+        JOIN enrolled en ON s.student_id = en.student_id
+        JOIN enrollment e ON en.enrollment_id = e.enrollment_id
+        WHERE s.dept_name = %s;
+        """
+        cursor.execute(sql, (selected_dept,))
+        (avg_gpa,) = cursor.fetchone()
+
+        if avg_gpa is not None:
+            numeric_avg = round(avg_gpa, 2)
+        else:
+            numeric_avg = None
+
+    cursor.close()
+
+    # Convert numeric average to a letter
+    def numeric_to_letter(avg):
+        if avg is None:
+            return "N/A"
+        if avg >= 3.5:
+            return "A"
+        elif avg >= 2.5:
+            return "B"
+        elif avg >= 1.5:
+            return "C"
+        elif avg >= 0.5:
+            return "D"
+        else:
+            return "F"
+
+    if numeric_avg is not None:
+        letter_avg = numeric_to_letter(numeric_avg)
+
+    return render_template(
+        'actions/instructor/average_dept.html',
+        data=data,
+        selected_dept=selected_dept,
+        numeric_avg=numeric_avg,
+        letter_avg=letter_avg
+    )
+
+
+######################################################
 # Search form route
 @app.route('/searchform')
 def searchform():
