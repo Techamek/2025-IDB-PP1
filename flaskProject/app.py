@@ -791,6 +791,575 @@ def modify_info_inst():
 
     return render_template("actions/instructor/modify_info.html", msg=msg)
 
+@app.route('/submit_grades', methods=['GET', 'POST'])
+def submit_grades():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    msg = ''
+
+    if request.method == 'POST':
+        student_id = request.form.get('student_id')
+        courseid   = request.form.get('courseid')     # optional if they type title instead
+        coursename = request.form.get('coursename')   # optional
+        section    = request.form.get('section')
+        semester   = request.form.get('semester')
+        year       = request.form.get('year')
+        grade      = request.form.get('grade')
+        instructor_id = session.get('instructor_id')
+
+        cursor = db.cursor()
+
+        try:
+            # 1) Find the section this instructor teaches that matches course/section/term
+            cursor.execute("""
+                SELECT s.section_id
+                FROM teaches t
+                JOIN section s      ON s.section_id = t.section_id
+                JOIN has_sections hs ON hs.section_id = s.section_id
+                JOIN course c       ON c.course_id = hs.course_id
+                WHERE t.instructor_id = %s
+                  AND s.sec_code = %s
+                  AND s.semester = %s
+                  AND s.year = %s
+                  AND (
+                        (%s IS NOT NULL AND %s <> '' AND c.course_id = %s)
+                     OR (%s IS NOT NULL AND %s <> '' AND c.title = %s)
+                  )
+            """, (
+                instructor_id,
+                section,
+                semester,
+                year,
+                courseid, courseid, courseid,   # for course_id match
+                coursename, coursename, coursename  # for title match
+            ))
+            sec_row = cursor.fetchone()
+
+            if not sec_row:
+                msg = "No matching section found that you teach for that course/term."
+                cursor.close()
+                return render_template('actions/instructor/submit_grades.html', msg=msg)
+
+            section_id = sec_row[0]
+
+            # 2) Find the enrollment record for this student in that section
+            cursor.execute("""
+                SELECT en.enrollment_id
+                FROM enrolled e
+                JOIN enrollment en    ON en.enrollment_id = e.enrollment_id
+                JOIN is_offered io    ON io.enrollment_id = en.enrollment_id
+                WHERE e.student_id = %s
+                  AND io.section_id = %s
+            """, (student_id, section_id))
+            enr_row = cursor.fetchone()
+
+            if not enr_row:
+                msg = "Student is not enrolled in that section."
+                cursor.close()
+                return render_template('actions/instructor/submit_grades.html', msg=msg)
+
+            enrollment_id = enr_row[0]
+
+            # 3) Update the grade
+            cursor.execute("""
+                UPDATE enrollment
+                SET grade = %s
+                WHERE enrollment_id = %s
+            """, (grade, enrollment_id))
+            db.commit()
+
+            msg = "Grade submitted successfully."
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Database error: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    return render_template('actions/instructor/submit_grades.html', msg=msg)
+
+@app.route('/change_grades', methods=['GET', 'POST'])
+def change_grades():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    msg = ''
+    old_grade = None
+
+    if request.method == 'POST':
+        student_id = request.form.get('student_id')
+        courseid   = request.form.get('courseid')     # optional if they type title instead
+        coursename = request.form.get('coursename')   # optional
+        section    = request.form.get('section')
+        semester   = request.form.get('semester')
+        year       = request.form.get('year')
+        new_grade  = request.form.get('grade')
+        instructor_id = session.get('instructor_id')
+
+        cursor = db.cursor()
+
+        try:
+            # 1) Find the section this instructor teaches that matches course/section/term
+            cursor.execute("""
+                SELECT s.section_id
+                FROM teaches t
+                JOIN section s       ON s.section_id = t.section_id
+                JOIN has_sections hs ON hs.section_id = s.section_id
+                JOIN course c        ON c.course_id = hs.course_id
+                WHERE t.instructor_id = %s
+                  AND s.sec_code = %s
+                  AND s.semester = %s
+                  AND s.year = %s
+                  AND (
+                        (%s IS NOT NULL AND %s <> '' AND c.course_id = %s)
+                     OR (%s IS NOT NULL AND %s <> '' AND c.title = %s)
+                  )
+            """, (
+                instructor_id,
+                section,
+                semester,
+                year,
+                courseid, courseid, courseid,
+                coursename, coursename, coursename
+            ))
+            sec_row = cursor.fetchone()
+
+            if not sec_row:
+                msg = "No matching section found that you teach for that course/term."
+                cursor.close()
+                return render_template('actions/instructor/change_grades.html', msg=msg, old_grade=old_grade)
+
+            section_id = sec_row[0]
+
+            # 2) Find the enrollment record for this student in that section (and get current grade)
+            cursor.execute("""
+                SELECT en.enrollment_id, en.grade
+                FROM enrolled e
+                JOIN enrollment en ON en.enrollment_id = e.enrollment_id
+                JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+                WHERE e.student_id = %s
+                  AND io.section_id = %s
+            """, (student_id, section_id))
+            enr_row = cursor.fetchone()
+
+            if not enr_row:
+                msg = "Student is not enrolled in that section."
+                cursor.close()
+                return render_template('actions/instructor/change_grades.html', msg=msg, old_grade=old_grade)
+
+            enrollment_id = enr_row[0]
+            old_grade = enr_row[1]  # could be None / NULL
+
+            # 3) Update the grade
+            cursor.execute("""
+                UPDATE enrollment
+                SET grade = %s
+                WHERE enrollment_id = %s
+            """, (new_grade, enrollment_id))
+            db.commit()
+
+            msg = f"Grade updated successfully (was {old_grade if old_grade is not None else 'None'} → {new_grade})."
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Database error: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    return render_template('actions/instructor/change_grades.html', msg=msg, old_grade=old_grade)
+
+@app.route('/add_advisor', methods=['GET', 'POST'])
+def add_advisor():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    msg = ''
+    instructor_id = session.get('instructor_id')
+
+    if request.method == 'POST':
+        student_id = request.form.get('student_id')
+
+        if not student_id:
+            msg = "Please enter a student ID."
+            return render_template('actions/instructor/add_advisor.html', msg=msg)
+
+        cursor = db.cursor()
+        try:
+            # 1) Make sure the student exists
+            cursor.execute("SELECT 1 FROM student WHERE student_id = %s", (student_id,))
+            row = cursor.fetchone()
+
+            if not row:
+                msg = "Student not found. Check the student ID."
+                cursor.close()
+                return render_template('actions/instructor/add_advisor.html', msg=msg)
+
+            # 2) Insert or update advisor record
+            cursor.execute("""
+                INSERT INTO advisor (student_id, instructor_id)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE instructor_id = VALUES(instructor_id)
+            """, (student_id, instructor_id))
+
+            db.commit()
+            msg = f"Student {student_id} is now assigned to you as an advisee."
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Database error: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    return render_template('actions/instructor/add_advisor.html', msg=msg)
+
+@app.route('/remove_advisor', methods=['GET', 'POST'])
+def remove_advisor():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    msg = ''
+    instructor_id = session.get('instructor_id')
+
+    if request.method == 'POST':
+        student_id = request.form.get('student_id')
+
+        if not student_id:
+            msg = "Please enter a student ID."
+            return render_template('actions/instructor/remove_advisor.html', msg=msg)
+
+        cursor = db.cursor()
+        try:
+            # 1) Check if this student is actually advised by THIS instructor
+            cursor.execute("""
+                SELECT 1
+                FROM advisor
+                WHERE student_id = %s
+                  AND instructor_id = %s
+            """, (student_id, instructor_id))
+            row = cursor.fetchone()
+
+            if not row:
+                msg = "That student is not currently assigned to you as an advisee."
+                cursor.close()
+                return render_template('actions/instructor/remove_advisor.html', msg=msg)
+
+            # 2) Delete the advisor row
+            cursor.execute("""
+                DELETE FROM advisor
+                WHERE student_id = %s
+                  AND instructor_id = %s
+            """, (student_id, instructor_id))
+
+            db.commit()
+            msg = f"Student {student_id} is no longer your advisee."
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Database error: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    return render_template('actions/instructor/remove_advisor.html', msg=msg)
+
+@app.route('/modify_prereqs', methods=['GET', 'POST'])
+def modify_prereqs():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    msg = ''
+
+    if request.method == 'POST':
+        action    = request.form.get('action')      # "add" or "remove"
+        course_id = request.form.get('course_id')
+        prereq_id = request.form.get('prereq_id')
+
+        if not course_id or not prereq_id:
+            msg = "Please enter both Course ID and Prerequisite Course ID."
+            return render_template('actions/instructor/modify_prereqs.html', msg=msg)
+
+        cursor = db.cursor()
+
+        try:
+            # 1) Make sure both courses exist
+            cursor.execute("SELECT 1 FROM course WHERE course_id = %s", (course_id,))
+            c1 = cursor.fetchone()
+            cursor.execute("SELECT 1 FROM course WHERE course_id = %s", (prereq_id,))
+            c2 = cursor.fetchone()
+
+            if not c1 or not c2:
+                msg = "One or both of the course IDs do not exist."
+                cursor.close()
+                return render_template('actions/instructor/modify_prereqs.html', msg=msg)
+
+            if action == 'add':
+                # 2a) Add prereq (course_id requires prereq_id)
+                try:
+                    cursor.execute("""
+                        INSERT INTO prereq (course_id, prereq_id)
+                        VALUES (%s, %s)
+                    """, (course_id, prereq_id))
+                    db.commit()
+                    msg = f"Prerequisite {prereq_id} added for course {course_id}."
+                except Exception as e:
+                    db.rollback()
+                    msg = f"Error adding prerequisite (it may already exist): {str(e)}"
+
+            elif action == 'remove':
+                # 2b) Remove prereq
+                cursor.execute("""
+                    DELETE FROM prereq
+                    WHERE course_id = %s AND prereq_id = %s
+                """, (course_id, prereq_id))
+
+                if cursor.rowcount == 0:
+                    msg = "No such prerequisite relationship found to remove."
+                    db.rollback()  # nothing changed anyway
+                else:
+                    db.commit()
+                    msg = f"Prerequisite {prereq_id} removed from course {course_id}."
+
+            else:
+                msg = "Invalid action."
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Database error: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    # GET or after POST → show page with msg
+    return render_template('actions/instructor/modify_prereqs.html', msg=msg)
+
+@app.route('/remove_from_section', methods=['GET', 'POST'])
+def remove_from_section():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    msg = ''
+    if request.method == 'POST':
+        student_id = request.form.get('student_id')
+        courseid   = request.form.get('courseid')     # optional
+        coursename = request.form.get('coursename')   # optional
+        section    = request.form.get('section')
+        semester   = request.form.get('semester')
+        year       = request.form.get('year')
+        instructor_id = session.get('instructor_id')
+
+        cursor = db.cursor()
+
+        try:
+            # 1) Find the section this instructor teaches that matches course/section/term
+            cursor.execute("""
+                SELECT s.section_id
+                FROM teaches t
+                JOIN section s        ON s.section_id = t.section_id
+                JOIN has_sections hs  ON hs.section_id = s.section_id
+                JOIN course c         ON c.course_id = hs.course_id
+                WHERE t.instructor_id = %s
+                  AND s.sec_code = %s
+                  AND s.semester = %s
+                  AND s.year = %s
+                  AND (
+                        (%s IS NOT NULL AND %s <> '' AND c.course_id = %s)
+                     OR (%s IS NOT NULL AND %s <> '' AND c.title = %s)
+                  )
+            """, (
+                instructor_id,
+                section,
+                semester,
+                year,
+                courseid, courseid, courseid,
+                coursename, coursename, coursename
+            ))
+            sec_row = cursor.fetchone()
+
+            if not sec_row:
+                msg = "No matching section found that you teach for that course/term."
+                cursor.close()
+                return render_template('actions/instructor/remove_from_section.html', msg=msg)
+
+            section_id = sec_row[0]
+
+            # 2) Find the enrollment for this student in that section
+            cursor.execute("""
+                SELECT en.enrollment_id
+                FROM enrolled e
+                JOIN enrollment en ON en.enrollment_id = e.enrollment_id
+                JOIN is_offered io ON io.enrollment_id = en.enrollment_id
+                WHERE e.student_id = %s
+                  AND io.section_id = %s
+            """, (student_id, section_id))
+            enr_row = cursor.fetchone()
+
+            if not enr_row:
+                msg = "Student is not enrolled in that section."
+                cursor.close()
+                return render_template('actions/instructor/remove_from_section.html', msg=msg)
+
+            enrollment_id = enr_row[0]
+
+            # 3) Delete relationships in correct FK order:
+            #    enrolled -> is_offered -> enrollment
+            cursor.execute("""
+                DELETE FROM enrolled
+                WHERE enrollment_id = %s
+            """, (enrollment_id,))
+
+            cursor.execute("""
+                DELETE FROM is_offered
+                WHERE enrollment_id = %s
+            """, (enrollment_id,))
+
+            cursor.execute("""
+                DELETE FROM enrollment
+                WHERE enrollment_id = %s
+            """, (enrollment_id,))
+
+            db.commit()
+            msg = f"Student {student_id} was removed from that section."
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Database error: {str(e)}"
+
+        finally:
+            cursor.close()
+
+    return render_template('actions/instructor/remove_from_section.html', msg=msg)
+
+@app.route('/section_roster', methods=['GET', 'POST'])
+def section_roster():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    instructor_id = session.get('instructor_id')
+    msg = ''
+    roster = []
+    selected_section_id = None
+
+    cursor = db.cursor()
+
+    # 1) Get all sections this instructor teaches (for the dropdown)
+    cursor.execute("""
+        SELECT 
+            s.section_id,
+            s.sec_code,
+            s.semester,
+            s.year,
+            c.course_id,
+            c.title
+        FROM teaches t
+        JOIN section s       ON s.section_id = t.section_id
+        JOIN has_sections hs ON hs.section_id = s.section_id
+        JOIN course c        ON c.course_id = hs.course_id
+        WHERE t.instructor_id = %s
+        ORDER BY s.year DESC, s.semester, c.course_id, s.sec_code
+    """, (instructor_id,))
+    sections = cursor.fetchall()
+
+    if request.method == 'POST':
+        selected_section_id = request.form.get('section_id')
+
+        if not selected_section_id:
+            msg = "Please select a section."
+        else:
+            # 2) Get roster for that section
+            cursor.execute("""
+                SELECT 
+                    st.student_id,
+                    st.first_name,
+                    st.middle_name,
+                    st.last_name,
+                    en.grade
+                FROM enrolled e
+                JOIN student st     ON st.student_id = e.student_id
+                JOIN enrollment en  ON en.enrollment_id = e.enrollment_id
+                JOIN is_offered io  ON io.enrollment_id = en.enrollment_id
+                WHERE io.section_id = %s
+                ORDER BY st.last_name, st.first_name
+            """, (selected_section_id,))
+            roster = cursor.fetchall()
+            if not roster:
+                msg = "No students enrolled in this section."
+
+    cursor.close()
+
+    return render_template(
+        'actions/instructor/section_roster.html',
+        msg=msg,
+        sections=sections,
+        roster=roster,
+        selected_section_id=selected_section_id
+    )
+
+@app.route('/teaching_sections', methods=['GET'])
+def teaching_sections():
+    # Must be logged in + instructor
+    if 'loggedin' not in session or session.get('role') != "Instructor":
+        return redirect(url_for('login'))
+
+    instructor_id = session.get('instructor_id')
+    sections = []
+    msg = ''
+
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            SELECT
+                s.section_id,
+                s.sec_code,
+                s.semester,
+                s.year,
+                c.course_id,
+                c.title,
+                cl.building,
+                cl.room_number,
+                ts.day,
+                ts.start_hr,
+                ts.start_min,
+                ts.end_hr,
+                ts.end_min
+            FROM teaches t
+            JOIN section s        ON s.section_id = t.section_id
+            JOIN has_sections hs  ON hs.section_id = s.section_id
+            JOIN course c         ON c.course_id = hs.course_id
+            LEFT JOIN held_in hi       ON hi.section_id = s.section_id
+            LEFT JOIN classroom cl     ON cl.room_id = hi.room_id
+            LEFT JOIN held_during hd   ON hd.section_id = s.section_id
+            LEFT JOIN time_slot ts     ON ts.time_slot_id = hd.time_slot_id
+            WHERE t.instructor_id = %s
+            ORDER BY s.year DESC, s.semester, c.course_id, s.sec_code
+        """, (instructor_id,))
+        sections = cursor.fetchall()
+
+        if not sections:
+            msg = "You are not currently assigned to teach any sections."
+
+    except Exception as e:
+        msg = f"Database error: {str(e)}"
+
+    finally:
+        cursor.close()
+
+    return render_template(
+        'actions/instructor/teaching_sections.html',
+        sections=sections,
+        msg=msg
+    )
+
 ##########################################
 #  ADMIN STUFF
 ##########################################
@@ -801,17 +1370,12 @@ def crud_course():
     msg=''
     if request.method == 'GET':
         cursor = db.cursor()
-        sql = "SELECT title FROM course;"
+        sql = "SELECT course_id, title, credits from course;"
         cursor.execute(sql)
         data = cursor.fetchall()
         cursor.close()
 
-        edited = []
-
-        for i in data:
-            edited.append(i[0])
-
-        return render_template('actions/admin/crud_course.html', data = edited, msg=msg)
+        return render_template('actions/admin/crud_course.html', data = data, msg=msg)
     if request.method == "POST"  and 'Cid' in request.form: #we creating out here
         id = request.form['Cid']
         title = request.form['Ctitle']
@@ -841,18 +1405,74 @@ def crud_course():
             msg = 'Course Created!'
             db.commit()
             cursor.close()
+    elif request.method == "POST" and 'update' in request.form:
+        course_id = request.form.get('course')
+        prereq = request.form.get('prereq')
+        dept = request.form.get('dept')
+
+        cursor = db.cursor()
+
+        try:
+            course_data = {
+                'title': request.form.get('title'),
+                'credits': request.form.get('credits')
+            }
+            # Filter out empty fields
+            update_fields = {k: v for k, v in course_data.items() if v not in (None, '')}
+
+            if update_fields:
+                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
+                values = list(update_fields.values())
+                values.append(course_id)
+                cursor.execute(f"UPDATE course SET {set_clause} WHERE course_id = %s", values)
+
+            if prereq:  # If user provided a prerequisite course
+                # Delete old prereqs first (simplest way to replace)
+                cursor.execute("DELETE FROM prereq WHERE course_id = %s", (course_id,))
+                # Then insert the new one
+                cursor.execute("INSERT INTO prereq (course_id, prereq_id) VALUES (%s, %s)", (course_id, prereq))
+
+            if dept:
+                # Delete old department links
+                cursor.execute("DELETE FROM has_course WHERE course_id = %s", (course_id,))
+                # Insert the new department
+                cursor.execute("INSERT INTO has_course (dept_id, course_id) VALUES (%s, %s)", (dept, course_id))
+
+            db.commit()
+            msg = "Info updated!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error updating info: {str(e)}"
+
+        finally:
+            cursor.close()
+    elif request.method == "POST" and 'delete' in request.form:
+        course_id = request.form.get('course')
+        cursor = db.cursor()
+        try:
+            cursor.execute("DELETE FROM prereq WHERE course_id = %s", (course_id,))
+
+            cursor.execute("DELETE FROM has_course WHERE course_id = %s", (course_id,))
+
+            cursor.execute("DELETE FROM has_sections WHERE course_id = %s", (course_id,))
+
+            cursor.execute("DELETE FROM course WHERE course_id = %s", (course_id,))
+
+            db.commit()
+            msg = "Course deleted successfully!"
+
+        except Exception as e:
+            db.rollback()
+            msg = f"Error deleting student: {e}"
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     cursor = db.cursor()
-    sql = "SELECT title from course;"
+    sql = "SELECT course_id, title, credits from course;"
     cursor.execute(sql)
-    data = cursor.fetchall()        
+    data = cursor.fetchall()     
     cursor.close()
-    edited = []
-
-    for i in data:
-        edited.append(i[0])
-    return render_template("actions/admin/crud_course.html",data=edited, msg=msg)
+    return render_template("actions/admin/crud_course.html",data=data, msg=msg)
 
 @app.route('/crud_section', methods=['POST', 'GET'])
 def crud_section():
@@ -1179,7 +1799,6 @@ def crud_instructor():
 
 @app.route('/crud_student', methods=['POST', 'GET'])
 def crud_student():
-    edited=''
     msg=''
     if request.method == 'GET':
         cursor = db.cursor()
@@ -1267,7 +1886,6 @@ def crud_student():
             cursor.close()
     elif request.method == 'POST' and 'update' in request.form:
         student_id = request.form.get('student')
-        account_id = session['id']  # from login session
 
         cursor = db.cursor()
 
@@ -1314,28 +1932,6 @@ def crud_student():
 
                 else:
                     return "Error: Major not found", 400
-
-            # -----------------------------
-            # 3. Update accounts table
-            # -----------------------------
-            account_data = {
-                'username': request.form.get('username'),
-                'password': request.form.get('password'),
-                'email': request.form.get('email')
-            }
-
-            # Hash password if provided
-            if account_data['password']:
-                account_data['password'] = generate_password_hash(account_data['password'])
-
-            # Filter out empty fields
-            update_fields = {k: v for k, v in account_data.items() if v not in (None, '')}
-
-            if update_fields:
-                set_clause = ", ".join(f"{k} = %s" for k in update_fields.keys())
-                values = list(update_fields.values())
-                values.append(account_id)
-                cursor.execute(f"UPDATE accounts SET {set_clause} WHERE id = %s", values)
 
             db.commit()
             msg = "Info updated!"
