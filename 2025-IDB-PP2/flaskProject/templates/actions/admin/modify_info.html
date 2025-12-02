@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+
+{% block title %}Modify Info{% endblock %}
+
+{% block content %}
+<center>
+    <div class="register">
+        <div class="links">
+            <a href="{{ url_for('home') }}">Back</a>
+        </div>
+        <div class="msg">{{ msg }}</div>
+        <form action="{{ url_for('modify_info_admin') }}" method="POST">
+            <h2>Change Administrator Info:</h2>
+            <div class="mb-3">
+                <input type="text" placeholder="Username" name="username">
+            </div>
+
+            <div class="mb-3">
+                <input type="text" placeholder="Password" name="password">
+            </div>
+
+            <div class="mb-3">
+                <input type="text" placeholder="Email" name="email">
+            </div>
+
+
+            <button type="submit" class="btn btn-primary">Change Info</button>
+    </div>
+</center>
+{% endblock %}
